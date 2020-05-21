@@ -1,6 +1,3 @@
-//
-// Created by Alec on 5/21/2020.
-//
 
 #include "ESC_Control.h"
 #include <stdio.h>
