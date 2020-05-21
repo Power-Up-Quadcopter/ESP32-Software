@@ -11,6 +11,7 @@
 #include "freertos/task.h"
 #include "esp_system.h"
 #include "esp_spi_flash.h"
+#include "ESC_Control.h"
 
 //Note to self: mingw32-make.exe flash
 void app_main() {
