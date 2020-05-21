@@ -1,6 +1,9 @@
 
-.idea/
-cmake-build-release/
-*.txt
-!main/CMakeLists.txt
-sdkconfig
+#Blacklist everything
+/*
+
+#Except these
+!.gitignore
+!README.md
+!/main/*
+

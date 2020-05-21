@@ -12,7 +12,7 @@
 #include "esp_system.h"
 #include "esp_spi_flash.h"
 
-
+//Note to self: mingw32-make.exe flash
 void app_main() {
     printf("Hello world!\n");
 
