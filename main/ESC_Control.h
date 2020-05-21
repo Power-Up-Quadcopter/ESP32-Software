@@ -1,0 +1,8 @@
+//
+// Created by Alec on 5/21/2020.
+//
+
+#ifndef ESP32_SOFTWARE_ESC_CONTROL_H
+#define ESP32_SOFTWARE_ESC_CONTROL_H
+
+#endif //ESP32_SOFTWARE_ESC_CONTROL_H

@@ -5,5 +5,5 @@
 #Except these
 !.gitignore
 !README.md
-!/main/*
+!/main/
 
