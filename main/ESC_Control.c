@@ -7,6 +7,7 @@
 #include "esp_spi_flash.h"
 #include "driver/gpio.h"
 
+void ESC_Out();
 
 //Pin numbers for ESC output
 #define ESC0_PIN 0
@@ -36,11 +37,17 @@ void ESCSetup(){
     gpio_set_level(ESC2_PIN, 0);
     gpio_set_level(ESC3_PIN, 0);
 
-
+    //TODO init periodic interrupt for ESC_Out here
 }
 
 //takes in esc #0-3 and power from  0-100
 //sets up PPM output to corresponding ESC
-void ESC_Out(int esc, int power){
+void ESC_Set(int esc, int power){
+    //TODO
+}
 
+
+//Periodic interrupt to manage the PPM signals to the ESCs
+void ESC_Out(){
+    //TODO
 }
