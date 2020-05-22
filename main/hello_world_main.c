@@ -7,28 +7,30 @@
 #include "esp_spi_flash.h"
 #include "ESC_Control.h"
 
-//Note to self: mingw32-make.exe flash
+
+//Note: If not using OpenOCD, run using "mingw32-make.exe flash" in the terminal below
+
+
+void DroneLoop();
+
+
+//arduino setup function equivalent
 void app_main() {
-    printf("Hello world!\n");
 
-    /* Print chip information */
-    esp_chip_info_t chip_info;
-    esp_chip_info(&chip_info);
-    printf("This is ESP32 chip with %d CPU cores, WiFi%s%s, ",
-           chip_info.cores,
-           (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-           (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
+    //TEST CODE FOR ESCs HERE:
+    printf("Setting up\n");
+    ESCSetup();
+    printf("Output 50 Percent in ESC0\n");
+    ESC_Set(0,50);
+    //END TEST CODE
 
-    printf("silicon revision %d, ", chip_info.revision);
-
-    printf("%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
-           (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
-
-    for (int i = 10; i >= 0; i--) {
-        printf("Restarting in %d seconds...\n", i);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
-    printf("Restarting now.\n");
-    fflush(stdout);
+    //create the DroneLoop task
+    xTaskCreate(&DroneLoop, "DroneLoop", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
     esp_restart();
+}
+
+//arduino loop function equivalent
+void DroneLoop(){
+    printf("Looping\n");
+    vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
 }
