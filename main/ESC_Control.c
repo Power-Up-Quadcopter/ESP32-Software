@@ -1,53 +1,111 @@
 
 #include "ESC_Control.h"
 #include <stdio.h>
+#include <driver/ledc.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
 #include "esp_spi_flash.h"
 #include "driver/gpio.h"
 
-void ESC_Out();
+#define ESC_STACK_SIZE 2048
 
 //Pin numbers for ESC output
-#define ESC0_PIN 0
-#define ESC1_PIN 1
-#define ESC2_PIN 2
-#define ESC3_PIN 3
+//Look at the table at this link for valid pins
+//https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
+#define ESC0_PIN 32
+#define ESC1_PIN 33
+#define ESC2_PIN 25
+#define ESC3_PIN 26
+
+void ESC_Out(void*);
+
 
 //Globals for keeping track of current ESC state
-int escPins[] = {ESC0_PIN,ESC1_PIN,ESC2_PIN,ESC3_PIN};
-int escOut[]  = {0,0,0,0}; //all off initially
+const uint8_t escPins[] = {ESC0_PIN,ESC1_PIN,ESC2_PIN,ESC3_PIN};
+const uint8_t escChannels[] = {LEDC_CHANNEL_1,LEDC_CHANNEL_2,LEDC_CHANNEL_3,LEDC_CHANNEL_4};
 
-//start interrupts and set up ESC pins
+//set up ESC pins for PWM
 void ESCSetup(){
-    //Configure pads for GPIO
-    gpio_pad_select_gpio(ESC0_PIN);
-    gpio_pad_select_gpio(ESC1_PIN);
-    gpio_pad_select_gpio(ESC2_PIN);
-    gpio_pad_select_gpio(ESC3_PIN);
-    //Set as Output
-    gpio_set_direction(ESC0_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(ESC1_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(ESC2_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(ESC3_PIN, GPIO_MODE_OUTPUT);
-    //Initially 0
-    gpio_set_level(ESC0_PIN, 0);
-    gpio_set_level(ESC1_PIN, 0);
-    gpio_set_level(ESC2_PIN, 0);
-    gpio_set_level(ESC3_PIN, 0);
 
-    //TODO init periodic interrupt for ESC_Out here
+    ledc_channel_config_t ledc_channel_ESC0 = {
+        .gpio_num   = ESC0_PIN,
+        .speed_mode = LEDC_HIGH_SPEED_MODE,
+        .channel    = LEDC_CHANNEL_1,
+        .intr_type  = LEDC_INTR_DISABLE,
+        .timer_sel  = LEDC_TIMER_1,
+        .duty = 0
+    };
+
+    ledc_channel_config_t ledc_channel_ESC1 = {
+            .gpio_num   = ESC1_PIN,
+            .speed_mode = LEDC_HIGH_SPEED_MODE,
+            .channel    = LEDC_CHANNEL_2,
+            .intr_type  = LEDC_INTR_DISABLE,
+            .timer_sel  = LEDC_TIMER_1,
+            .duty = 0
+    };
+
+    ledc_channel_config_t ledc_channel_ESC2 = {
+            .gpio_num   = ESC2_PIN,
+            .speed_mode = LEDC_HIGH_SPEED_MODE,
+            .channel    = LEDC_CHANNEL_3,
+            .intr_type  = LEDC_INTR_DISABLE,
+            .timer_sel  = LEDC_TIMER_1,
+            .duty = 0
+    };
+
+    ledc_channel_config_t ledc_channel_ESC3 = {
+            .gpio_num   = ESC3_PIN,
+            .speed_mode = LEDC_HIGH_SPEED_MODE,
+            .channel    = LEDC_CHANNEL_4,
+            .intr_type  = LEDC_INTR_DISABLE,
+            .timer_sel  = LEDC_TIMER_1,
+            .duty = 0
+    };
+
+
+    ledc_timer_config_t ledc_timer = {
+            .duty_resolution = LEDC_TIMER_13_BIT, // resolution of PWM duty
+            .freq_hz = 5000,                      // frequency of PWM signal
+            .speed_mode = LEDC_HIGH_SPEED_MODE,           // timer mode
+            .timer_num = LEDC_TIMER_1,            // timer index
+            .clk_cfg = LEDC_AUTO_CLK,              // Auto select the source clock
+    };
+
+    ESP_ERROR_CHECK( ledc_channel_config(&ledc_channel_ESC0) );
+    ESP_ERROR_CHECK( ledc_channel_config(&ledc_channel_ESC1) );
+    ESP_ERROR_CHECK( ledc_channel_config(&ledc_channel_ESC2) );
+    ESP_ERROR_CHECK( ledc_channel_config(&ledc_channel_ESC3) );
+    ESP_ERROR_CHECK( ledc_timer_config(&ledc_timer) );
+
+//    //Configure pins for GPIO
+//    gpio_pad_select_gpio(ESC0_PIN);
+//    gpio_pad_select_gpio(ESC1_PIN);
+//    gpio_pad_select_gpio(ESC2_PIN);
+//    gpio_pad_select_gpio(ESC3_PIN);
+//
+//    gpio_set_direction(ESC0_PIN, GPIO_MODE_OUTPUT);
+//    gpio_set_direction(ESC1_PIN, GPIO_MODE_OUTPUT);
+//    gpio_set_direction(ESC2_PIN, GPIO_MODE_OUTPUT);
+//    gpio_set_direction(ESC3_PIN, GPIO_MODE_OUTPUT);
+//
+//    //All pins off initially
+//    gpio_set_level(ESC0_PIN, 0);
+//    gpio_set_level(ESC1_PIN, 0);
+//    gpio_set_level(ESC2_PIN, 0);
+//    gpio_set_level(ESC3_PIN, 0);
+
 }
 
 //takes in esc #0-3 and power from  0-100
-//sets up PPM output to corresponding ESC
-void ESC_Set(int esc, int power){
-    //TODO
+//sets up PWM output to corresponding ESC
+void ESC_Set(uint8_t esc, uint8_t power){
+    assert(esc<4);
+    assert(power<=100);
+    float fraction  = power/100.0F;
+
+    ESP_ERROR_CHECK( ledc_set_duty(LEDC_HIGH_SPEED_MODE, escChannels[esc], 163.82*fraction) );
+    ESP_ERROR_CHECK( ledc_update_duty(LEDC_HIGH_SPEED_MODE, escChannels[esc]) );
 }
 
-
-//Periodic interrupt to manage the PPM signals to the ESCs
-void ESC_Out(){
-    //TODO
-}
