@@ -1,22 +1,22 @@
 
 
 #include <stdio.h>
+#include <nvs_flash.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
 #include "esp_spi_flash.h"
 #include "ESC_Control.h"
 
+#define MAIN_LOOP_STACK_SIZE 2048
 
 //Note: If not using OpenOCD, run using "mingw32-make.exe flash" in the terminal below
 
-
-void DroneLoop();
+void DroneLoop(void*);
 
 
 //arduino setup function equivalent
 void app_main() {
-
     //TEST CODE FOR ESCs HERE:
     printf("Setting up\n");
     ESCSetup();
@@ -25,12 +25,14 @@ void app_main() {
     //END TEST CODE
 
     //create the DroneLoop task
-    xTaskCreate(&DroneLoop, "DroneLoop", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
-    esp_restart();
+    xTaskCreate(&DroneLoop, "DroneLoop", MAIN_LOOP_STACK_SIZE, NULL, 5, NULL);
 }
 
 //arduino loop function equivalent
-void DroneLoop(){
-    printf("Looping\n");
-    vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
+void DroneLoop(void* ptr){
+    while (1){
+        printf("Looping\n");
+        vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
+        //TODO put crap here
+    }
 }
