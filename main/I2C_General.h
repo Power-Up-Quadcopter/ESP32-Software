@@ -1,0 +1,11 @@
+
+#ifndef ESP32_SOFTWARE_I2C_GENERAL_H
+#define ESP32_SOFTWARE_I2C_GENERAL_H
+
+#define SCL_PIN 17
+#define SDA_PIN 16
+#define I2C_Freq 100000
+
+void I2C_Init();
+
+#endif //ESP32_SOFTWARE_I2C_GENERAL_H
