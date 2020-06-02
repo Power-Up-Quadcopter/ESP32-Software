@@ -13,12 +13,7 @@
 //Pin numbers for ESC output
 //Look at the table at this link for valid pins
 //https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
-#define ESC0_PIN 32
-#define ESC1_PIN 33
-#define ESC2_PIN 25
-#define ESC3_PIN 26
 
-void ESC_Out(void*);
 
 
 //Globals for keeping track of current ESC state
@@ -26,7 +21,7 @@ const uint8_t escPins[] = {ESC0_PIN,ESC1_PIN,ESC2_PIN,ESC3_PIN};
 const uint8_t escChannels[] = {LEDC_CHANNEL_1,LEDC_CHANNEL_2,LEDC_CHANNEL_3,LEDC_CHANNEL_4};
 
 //set up ESC pins for PWM
-void ESCSetup(){
+void Esc_Init(){
 
     ledc_channel_config_t ledc_channel_ESC0 = {
         .gpio_num   = ESC0_PIN,
@@ -100,12 +95,12 @@ void ESCSetup(){
 
 //takes in esc #0-3 and power from  0-100
 //sets up PWM output to corresponding ESC
-void ESC_Set(uint8_t esc, uint8_t power){
+void Esc_Set(uint8_t esc, uint8_t power){
     assert(esc<4);
     assert(power<=100);
     float fraction  = power/100.0F;
 
-    ESP_ERROR_CHECK( ledc_set_duty(LEDC_HIGH_SPEED_MODE, escChannels[esc], 163.82*fraction) );
+    ESP_ERROR_CHECK( ledc_set_duty(LEDC_HIGH_SPEED_MODE, escChannels[esc], 81.91*fraction + 81.91) ); //1% duty when 0, 2% when 100
     ESP_ERROR_CHECK( ledc_update_duty(LEDC_HIGH_SPEED_MODE, escChannels[esc]) );
 }
 
