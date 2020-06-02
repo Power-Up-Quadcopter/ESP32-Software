@@ -19,12 +19,12 @@ void DroneLoop(void*);
 void app_main() {
 
     printf("Setting up\n");
-    ESC_Init();
+    Esc_Init();
     I2C_Init();
 
     //TEST CODE HERE
     printf("TEST: Output 50 Percent in ESC0\n");
-    ESC_Set(0,50);
+    Esc_Set(0,50);
     //END TEST AREA
 
     //create the DroneLoop task

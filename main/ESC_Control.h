@@ -9,7 +9,7 @@
 #define ESC2_PIN 25
 #define ESC3_PIN 26
 
-void ESC_Init();
-void ESC_Set(uint8_t esc, uint8_t power);
+void Esc_Init();
+void Esc_Set(uint8_t esc, uint8_t power);
 
 #endif //ESP32_SOFTWARE_ESC_CONTROL_H
