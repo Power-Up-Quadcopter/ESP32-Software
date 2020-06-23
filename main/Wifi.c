@@ -65,7 +65,7 @@ void Wifi_Init(){
                     .channel = ESP_WIFI_CHANNEL,
                     .password = ESP_WIFI_PASS,
                     .max_connection = 4,
-                    .authmode = WIFI_AUTH_WPA_WPA2_PSK
+                    .authmode = WIFI_AUTH_WPA_WPA2_PSK,
             },
     };
     if (strlen(ESP_WIFI_PASS) == 0) {
@@ -75,6 +75,7 @@ void Wifi_Init(){
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
+    esp_wifi_set_max_tx_power(127);
 
     ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s password:%s channel:%d",
              ESP_WIFI_SSID, ESP_WIFI_PASS, ESP_WIFI_CHANNEL);
