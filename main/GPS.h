@@ -1,0 +1,7 @@
+
+#ifndef ESP32_SOFTWARE_GPS_H
+#define ESP32_SOFTWARE_GPS_H
+
+void GPS_Init();
+
+#endif //ESP32_SOFTWARE_GPS_H

@@ -7,6 +7,7 @@
 #include "esp_spi_flash.h"
 #include "ESC_Control.h"
 #include "I2C_General.h"
+#include "GPS.h"
 
 #define MAIN_LOOP_STACK_SIZE 2048
 
@@ -21,6 +22,7 @@ void app_main() {
     printf("Setting up\n");
     Esc_Init();
     I2C_Init();
+    GPS_Init();
 
     //TEST CODE HERE
     printf("TEST: Output 50 Percent in ESC0\n");
