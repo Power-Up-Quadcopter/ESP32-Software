@@ -1,13 +1,9 @@
 
 #include <stdint.h>
-#include <driver/i2c.h>
 #include "MPU6500.h"
 #include "I2C_General.h"
 
 #define mpuAddrW 208
-#define mpuAddrR 209
-
-
 
 void MPU_Write8(uint8_t data, uint8_t regAddr){
     I2C_Write8(mpuAddrW, data, regAddr);
