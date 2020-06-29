@@ -5,4 +5,6 @@ idf_component_register(SRCS  "hello_world_main.c"
         "Wifi.c"
         "MPU6500.c"
         "Magnetometer.c"
+        "Pressure.c"
+        "GPIO_Expand.c"
         INCLUDE_DIRS "")

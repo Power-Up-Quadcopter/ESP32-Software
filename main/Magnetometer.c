@@ -3,8 +3,7 @@
 #include "I2C_General.h"
 #include "Magnetometer.h"
 
-#define magAddrW 208
-#define magAddrR 209
+#define magAddrW 60
 
 void Mag_Write8(uint8_t data, uint8_t regAddr){
     I2C_Write8(magAddrW, data, regAddr);
