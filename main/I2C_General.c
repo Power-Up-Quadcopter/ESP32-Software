@@ -77,12 +77,73 @@ void Read_n_Bytes(uint8_t addr, uint8_t* bytes, int n){
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 
     i2c_master_start(cmd);
-    i2c_master_write_byte(cmd,addr,1);
-    i2c_master_read(cmd,bytes,n-1,1);
-    i2c_master_read(cmd,bytes + n-1,1,0);
+    i2c_master_write_byte(cmd, addr, 1);
+    i2c_master_read(cmd,bytes, n-1, 1);
+    i2c_master_read(cmd,bytes + n-1, 1, 0);
     i2c_master_stop(cmd);
 
     ESP_ERROR_CHECK(i2c_master_cmd_begin(I2Cport,cmd, WAIT_TIME/portTICK_PERIOD_MS));
     i2c_cmd_link_delete(cmd);
 
+}
+
+void I2C_Write8(uint8_t addrW, uint8_t data, uint8_t regAddr){
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    uint8_t toSend[3] = {addrW, regAddr, data};
+
+    i2c_master_start(cmd);
+    i2c_master_write(cmd, toSend, 3, 1);
+    i2c_master_stop(cmd);
+
+    ESP_ERROR_CHECK(i2c_master_cmd_begin(I2Cport,cmd, WAIT_TIME/portTICK_PERIOD_MS));
+
+}
+
+
+void I2C_Write16(uint8_t addrW, uint16_t data, uint8_t regAddr){
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    uint8_t toSend[4] = {addrW, regAddr, *(((uint8_t*) &data)+1), *(((uint8_t*) &data))};
+
+    i2c_master_start(cmd);
+    i2c_master_write(cmd, toSend, 4, 1);
+    i2c_master_stop(cmd);
+
+    ESP_ERROR_CHECK(i2c_master_cmd_begin(I2Cport,cmd, WAIT_TIME/portTICK_PERIOD_MS));
+}
+
+uint8_t I2C_Read8(uint8_t addrW, uint8_t regAddr){
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    uint8_t out;
+
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd,addrW, 1);
+    i2c_master_write_byte(cmd,regAddr, 1);
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd,addrW + 1, 1);
+    i2c_master_read_byte(cmd,&out,I2C_MASTER_LAST_NACK);
+    i2c_master_stop(cmd);
+
+    ESP_ERROR_CHECK(i2c_master_cmd_begin(I2Cport,cmd, WAIT_TIME/portTICK_PERIOD_MS));
+
+    i2c_master_stop(cmd);
+    return out;
+}
+
+
+uint16_t I2C_Read16(uint8_t addrW, uint8_t regAddr){
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    uint16_t out;
+
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd,addrW, 1);
+    i2c_master_write_byte(cmd,regAddr, 1);
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd,addrW + 1, 1);
+    i2c_master_read(cmd, (((uint8_t*) &out)+1), 2, I2C_MASTER_LAST_NACK);
+    i2c_master_stop(cmd);
+
+    ESP_ERROR_CHECK(i2c_master_cmd_begin(I2Cport,cmd, WAIT_TIME/portTICK_PERIOD_MS));
+
+    i2c_master_stop(cmd);
+    return out;
 }

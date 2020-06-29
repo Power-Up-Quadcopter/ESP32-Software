@@ -2,6 +2,8 @@
 #ifndef ESP32_SOFTWARE_MPU6500_H
 #define ESP32_SOFTWARE_MPU6500_H
 
+//put useful defines for register addresses here
+
 //write an 8bit value to specific register
 void MPU_Write8(uint8_t data, uint8_t regAddr);
 
