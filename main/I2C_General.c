@@ -7,13 +7,13 @@
 #include "driver/i2c.h"
 
 
-#define WAIT_TIME 50
+
 
 //common I2C functions that we will use
 //Look here for documentation:
 //https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/i2c.html#
 
-static i2c_port_t I2Cport = I2C_NUM_0;
+
 
 //Initialize the I2C port we will be using
 void I2C_Init(){
@@ -70,6 +70,7 @@ uint8_t Read_Byte(uint8_t addr){
 
     return byte;
 }
+
 
 //read n bytes from a device
 void Read_n_Bytes(uint8_t addr, uint8_t* bytes, int n){

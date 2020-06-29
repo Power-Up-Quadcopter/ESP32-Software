@@ -2,11 +2,15 @@
 #ifndef ESP32_SOFTWARE_I2C_GENERAL_H
 #define ESP32_SOFTWARE_I2C_GENERAL_H
 
+#include <driver/i2c.h>
 #include "stdint.h"
 
-#define SCL_PIN 17
-#define SDA_PIN 16
+#define SCL_PIN 36
+#define SDA_PIN 33
+#define WAIT_TIME 50
 #define I2C_Freq 100000
+#define I2Cport I2C_NUM_0
+
 
 void I2C_Init();
 
