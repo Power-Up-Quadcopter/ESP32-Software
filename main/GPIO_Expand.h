@@ -3,6 +3,12 @@
 #define ESP32_SOFTWARE_GPIO_EXPAND_H
 
 //put useful defines for register addresses here
+#define IODIRA 0x00
+#define IODIRB 0x01
+#define GPPUA 0x0C
+#define GPPUB 0x0D
+#define GPIOA 0x12
+#define GPIOB 0x13
 
 //write an 8bit value to specific register
 void expand_Write8(uint8_t data, uint8_t regAddr);

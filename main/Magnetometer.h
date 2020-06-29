@@ -3,6 +3,13 @@
 #define ESP32_SOFTWARE_MAGNETOMETER_H
 
 //put useful defines for register addresses here
+#define FXOS8700CQ_STATUS 0x00
+#define FXOS8700CQ_WHOAMI 0x0D
+#define FXOS8700CQ_XYZ_DATA_CFG 0x0E
+#define FXOS8700CQ_CTRL_REG1 0x2A
+#define FXOS8700CQ_M_CTRL_REG1 0x5B
+#define FXOS8700CQ_M_CTRL_REG2 0x5C
+#define FXOS8700CQ_WHOAMI_VAL 0xC7
 
 //write an 8bit value to specific register
 void Mag_Write8(uint8_t data, uint8_t regAddr);
