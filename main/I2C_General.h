@@ -5,8 +5,8 @@
 #include <driver/i2c.h>
 #include "stdint.h"
 
-#define SCL_PIN 36
-#define SDA_PIN 33
+#define SCL_PIN 22
+#define SDA_PIN 21
 #define WAIT_TIME 50
 #define I2C_Freq 100000
 #define I2Cport I2C_NUM_0

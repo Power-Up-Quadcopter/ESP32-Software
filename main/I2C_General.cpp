@@ -6,21 +6,16 @@
 #include "driver/gpio.h"
 #include "driver/i2c.h"
 
-
-
-
 //common I2C functions that we will use
 //Look here for documentation:
 //https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/i2c.html#
-
-
 
 //Initialize the I2C port we will be using
 void I2C_Init(){
     i2c_config_t conf;
     conf.mode = I2C_MODE_MASTER;
-    conf.sda_io_num = static_cast<gpio_num_t>(SDA_PIN);
-    conf.scl_io_num = static_cast<gpio_num_t>(SCL_PIN);
+    conf.sda_io_num = SDA_PIN;
+    conf.scl_io_num = SCL_PIN;
     conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
     conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
     conf.master.clk_speed = I2C_Freq;
