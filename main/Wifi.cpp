@@ -39,15 +39,13 @@ void wifi_event_handler(void* arg, esp_event_base_t event_base,
 }
 
 void Wifi_Init(){
-
-
-    tcpip_adapter_init();
-    tcpip_adapter_ip_info_t info;
-    memset(&info, 0, sizeof(info));
-    IP4_ADDR(&info.ip, 192, 168, 1, 1);
-    IP4_ADDR(&info.gw, 192, 168, 1, 1);
-    IP4_ADDR(&info.netmask, 255, 255, 255, 0);
-    ESP_ERROR_CHECK(tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_AP, &info));
+//    tcpip_adapter_init();
+//    tcpip_adapter_ip_info_t info;
+//    IP4_ADDR(&info.ip, 192, 168, 1, 1);
+//    IP4_ADDR(&info.gw, 192, 168, 1, 1);
+//    IP4_ADDR(&info.netmask, 255, 255, 255, 0);
+//    ESP_ERROR_CHECK(tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_AP, &info));
+//    memset(&info, 0, sizeof(info));
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
