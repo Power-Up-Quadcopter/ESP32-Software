@@ -18,7 +18,7 @@
 
 //Globals for keeping track of current ESC state
 const uint8_t escPins[] = {ESC0_PIN,ESC1_PIN,ESC2_PIN,ESC3_PIN};
-const uint8_t escChannels[] = {LEDC_CHANNEL_1,LEDC_CHANNEL_2,LEDC_CHANNEL_3,LEDC_CHANNEL_4};
+const ledc_channel_t escChannels[] = {LEDC_CHANNEL_1,LEDC_CHANNEL_2,LEDC_CHANNEL_3,LEDC_CHANNEL_4};
 
 //set up ESC pins for PWM
 void Esc_Init(){
@@ -61,10 +61,10 @@ void Esc_Init(){
 
 
     ledc_timer_config_t ledc_timer = {
-            .duty_resolution = LEDC_TIMER_13_BIT, // resolution of PWM duty
-            .freq_hz = 5000,                      // frequency of PWM signal
             .speed_mode = LEDC_HIGH_SPEED_MODE,           // timer mode
+            .duty_resolution = LEDC_TIMER_13_BIT, // resolution of PWM duty
             .timer_num = LEDC_TIMER_1,            // timer index
+            .freq_hz = 5000,                      // frequency of PWM signal
             .clk_cfg = LEDC_AUTO_CLK,              // Auto select the source clock
     };
 

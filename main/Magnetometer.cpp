@@ -5,6 +5,8 @@
 
 #define magAddrW 60
 
+
+
 void Mag_Write8(uint8_t data, uint8_t regAddr){
     I2C_Write8(magAddrW, data, regAddr);
 }

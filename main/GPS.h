@@ -16,7 +16,7 @@ extern int speed;          //speed in knots, fixed point resolution of 0.1
 extern int courseMadeGood; //direction of actual travel, NOT heading, fixed point resolution of 0.1
 extern uint8_t day;
 extern uint8_t month;
-extern extern int year;
+extern int year;
 extern int magVar;         //magnetic variation, fixed point resolution of 0.1
 extern uint8_t magVarDir;  //magnetic variation direction, 0 East, 1 West
 

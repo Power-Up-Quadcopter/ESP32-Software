@@ -5,8 +5,8 @@
 #include "GPS.h"
 
 #define GPS_LOOP_STACK_SIZE 2048
-#define GPSRX 16
-#define GPSTX 17
+#define GPSRX 33
+#define GPSTX 32
 
 QueueHandle_t uart_queue;
 
@@ -43,6 +43,8 @@ void GPS_Init(){
             .parity = UART_PARITY_DISABLE,
             .stop_bits = UART_STOP_BITS_1,
             .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+            .rx_flow_ctrl_thresh = 122,
+            .use_ref_tick = 0
     };
 
 
@@ -60,7 +62,7 @@ void GPS_Init(){
                                         uart_buffer_size, 10, &uart_queue, 0));
 
 
-    xTaskCreate(&GPS_Loop, "GPSLoop", GPS_LOOP_STACK_SIZE, NULL, 5, NULL);
+    xTaskCreate(reinterpret_cast<TaskFunction_t>(&GPS_Loop), "GPSLoop", GPS_LOOP_STACK_SIZE, NULL, 5, NULL);
 
 }
 
@@ -190,12 +192,12 @@ void cmdParse(char* cmd){
 
 void GPS_Loop(){
     uart_event_t event;
-    uint8_t* input = (uint8_t*) malloc(400);
+    uint8_t* input = (uint8_t*) malloc(700);
     char* lines[7];
     while(1){
         if(xQueueReceive(uart_queue, (void * )&event, (portTickType)portMAX_DELAY)) {
             if(event.type == UART_BREAK){
-                int inputLen = uart_read_bytes(UART_NUM_2, input, 399, 100);
+                int inputLen = uart_read_bytes(UART_NUM_2, input, 699, 100);
                 input[inputLen] = 0;
                 uart_flush(UART_NUM_2);
                 int numLines = getLines(input, lines);
@@ -205,6 +207,7 @@ void GPS_Loop(){
                 }
                 input[0] = 0;
             }
+
         }
 
 

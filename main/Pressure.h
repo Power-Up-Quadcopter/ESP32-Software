@@ -5,6 +5,7 @@
 
 //put useful defines for register addresses here
 
+
 //write an 8bit value to specific register
 void Pressure_Write8(uint8_t data, uint8_t regAddr);
 
