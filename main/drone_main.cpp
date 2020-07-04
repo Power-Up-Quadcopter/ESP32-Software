@@ -15,6 +15,11 @@
 
 #define MAIN_LOOP_STACK_SIZE 2048
 
+extern "C" {
+    void app_main();
+};
+
+
 //Note: If not using OpenOCD, run using "mingw32-make.exe flash" in the terminal below
 
 void DroneLoop(void*);
