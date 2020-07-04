@@ -3,6 +3,8 @@
 #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 
 #include <string.h>
+#include <lwip/sockets.h>
+#include <freertos/event_groups.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
@@ -18,40 +20,130 @@
 #define ESP_WIFI_SSID      "PowerUp"
 #define ESP_WIFI_PASS      ""
 #define ESP_WIFI_CHANNEL   1
+#define LISTENQ 2
 
+const int CLIENT_CONNECTED_BIT = BIT0;
+const int CLIENT_DISCONNECTED_BIT = BIT1;
+const int AP_STARTED_BIT = BIT2;
 
-
+static EventGroupHandle_t wifi_event_group;
 static const char *TAG = "wifi softAP";
 
-void wifi_event_handler(void* arg, esp_event_base_t event_base,
-                        int32_t event_id, void* event_data)
+int clientSocket; //client socket
+int socketHandle;
+bool TCPConnected = false;
+
+static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
-    printf("%d\n", event_id);
-    if (event_id == WIFI_EVENT_AP_STACONNECTED) {
-        wifi_event_ap_staconnected_t* event = (wifi_event_ap_staconnected_t*) event_data;
-        ESP_LOGI(TAG, "station " MACSTR" join, AID=%d",
-                MAC2STR(event->mac), event->aid);
-    } else if (event_id == WIFI_EVENT_AP_STADISCONNECTED) {
-        wifi_event_ap_stadisconnected_t* event = (wifi_event_ap_stadisconnected_t*) event_data;
-        ESP_LOGI(TAG, "station " MACSTR" leave, AID=%d",
-                MAC2STR(event->mac), event->aid);
+    switch(event->event_id) {
+        case SYSTEM_EVENT_AP_START:
+            printf("Event:ESP32 is started in AP mode\n");
+            xEventGroupSetBits(wifi_event_group, AP_STARTED_BIT);
+            break;
+
+        case SYSTEM_EVENT_AP_STACONNECTED:
+            xEventGroupSetBits(wifi_event_group, CLIENT_CONNECTED_BIT);
+            break;
+
+        case SYSTEM_EVENT_AP_STADISCONNECTED:
+            xEventGroupSetBits(wifi_event_group, CLIENT_DISCONNECTED_BIT);
+            break;
+        default:
+            break;
     }
+    return ESP_OK;
+}
+
+void Wifi_startTCPServer() {
+    struct sockaddr_in tcpServerAddr;
+    tcpServerAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    tcpServerAddr.sin_family = AF_INET;
+    tcpServerAddr.sin_port = htons( 5414 );
+    int r;
+    char recv_buf[64];
+    static struct sockaddr_in remote_addr;
+    static unsigned int socklen;
+    socklen = sizeof(remote_addr);
+    xEventGroupWaitBits(wifi_event_group,AP_STARTED_BIT,false,true,portMAX_DELAY);
+
+        socketHandle = socket(AF_INET, SOCK_STREAM, 0);
+        if(socketHandle < 0) {
+            ESP_LOGE(TAG, "... Failed to allocate socket.\n");
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            return;
+        }
+        ESP_LOGI(TAG, "... allocated socket\n");
+        if(bind(socketHandle, (struct sockaddr *)&tcpServerAddr, sizeof(tcpServerAddr)) != 0) {
+            ESP_LOGE(TAG, "... socket bind failed errno=%d \n", errno);
+            close(socketHandle);
+            vTaskDelay(4000 / portTICK_PERIOD_MS);
+            return;
+        }
+        ESP_LOGI(TAG, "... socket bind done \n");
+        if(listen (socketHandle, LISTENQ) != 0) {
+            ESP_LOGE(TAG, "... socket listen failed errno=%d \n", errno);
+            close(socketHandle);
+            vTaskDelay(4000 / portTICK_PERIOD_MS);
+            return;
+        }
+
+        clientSocket = accept(socketHandle,(struct sockaddr *)&remote_addr, &socklen);
+        ESP_LOGI(TAG,"New TCP connection request");
+    TCPConnected = true;
+//            //set O_NONBLOCK so that recv will return, otherwise we need to impliment message end
+//            //detection logic. If know the client message format you should instead impliment logic
+//            //detect the end of message
+//            fcntl(cs,F_SETFL,O_NONBLOCK);
+//            do {
+//                bzero(recv_buf, sizeof(recv_buf));
+//                r = recv(cs, recv_buf, sizeof(recv_buf)-1,0);
+//                for(int i = 0; i < r; i++) {
+//                    putchar(recv_buf[i]);
+//                }
+//            } while(r > 0);
+//
+//            ESP_LOGI(TAG, "... done reading from socket. Last read return=%d errno=%d\r\n", r, errno);
+//
+//            char message[] = "asdf\n";
+//        }
+//        ESP_LOGI(TAG, "... server will be opened in 5 seconds");
+//        vTaskDelay(5000 / portTICK_PERIOD_MS);
+//    }
+//    ESP_LOGI(TAG, "...tcp_client task closed\n");
+}
+
+void Wifi_sendTCP(char* message, int len) {
+    if(!TCPConnected) return;
+    if( write(clientSocket , message , len) < 0)
+    {
+        ESP_LOGE(TAG, "... Send failed \n");
+        close(socketHandle);
+        vTaskDelay(4000 / portTICK_PERIOD_MS);
+    }
+    ESP_LOGI(TAG, "... socket send success");
 }
 
 void Wifi_Init(){
-//    tcpip_adapter_init();
-//    tcpip_adapter_ip_info_t info;
-//    IP4_ADDR(&info.ip, 192, 168, 1, 1);
-//    IP4_ADDR(&info.gw, 192, 168, 1, 1);
-//    IP4_ADDR(&info.netmask, 255, 255, 255, 0);
-//    ESP_ERROR_CHECK(tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_AP, &info));
-//    memset(&info, 0, sizeof(info));
+    ESP_ERROR_CHECK( esp_event_loop_init(event_handler, NULL) );
+    wifi_event_group = xEventGroupCreate();
 
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    // initialize the tcp stack
+    tcpip_adapter_init();
+    // stop DHCP server
+    ESP_ERROR_CHECK(tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP));
+    // assign a static IP to the network interface
+    tcpip_adapter_ip_info_t info;
+    memset(&info, 0, sizeof(info));
+    IP4_ADDR(&info.ip, 192, 168, 1, 1);
+    IP4_ADDR(&info.gw, 192, 168, 1, 1);//ESP acts as router, so gw addr will be its own addr
+    IP4_ADDR(&info.netmask, 255, 255, 255, 0);
+    ESP_ERROR_CHECK(tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_AP, &info));
+    // start the DHCP server
+    ESP_ERROR_CHECK(tcpip_adapter_dhcps_start(TCPIP_ADAPTER_IF_AP));
+
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
 
     wifi_config_t wifi_config = {};
     wifi_config.ap.ssid[0] = 'P';
@@ -71,19 +163,7 @@ void Wifi_Init(){
     wifi_config.ap.ssid_hidden = 0;
     wifi_config.ap.max_connection = 4;
     wifi_config.ap.beacon_interval = 100;
-    /*
-    wifi_ap_config_t ap = {
-            {.ssid = ESP_WIFI_SSID},
-            {.password = ESP_WIFI_PASS,
-            .ssid_len = static_cast<uint8_t>(strlen(ESP_WIFI_SSID)),
-            .channel = ESP_WIFI_CHANNEL,
-            .authmode = WIFI_AUTH_WPA_WPA2_PSK,
-            .ssid_hidden = 0,
-            .max_connection = 4,
-            .beacon_interval = 100
-    };
-    wifi_config.ap = ap;
-     */
+
     if (strlen(ESP_WIFI_PASS) == 0) {
         wifi_config.ap.authmode = WIFI_AUTH_OPEN;
     }

@@ -11,9 +11,7 @@
 #define I2C_Freq 100000
 #define I2Cport I2C_NUM_0
 
-
-void I2C_Init();
-
+esp_err_t I2C_Init();
 
 //  ---dont use these functions outside of drivers, use driver specific functions---
 
