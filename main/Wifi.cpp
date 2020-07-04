@@ -53,15 +53,30 @@ void Wifi_Init(){
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT,
-                                                        ESP_EVENT_ANY_ID,
-                                                        &wifi_event_handler,
-                                                        NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
 
     wifi_config_t wifi_config = {};
+    wifi_config.ap.ssid[0] = 'P';
+    wifi_config.ap.ssid[1] = 'U';
+    wifi_config.ap.ssid[2] = 10;
+    wifi_config.ap.password[0] = '1';
+    wifi_config.ap.password[1] = '2';
+    wifi_config.ap.password[2] = '3';
+    wifi_config.ap.password[3] = '4';
+    wifi_config.ap.password[4] = '5';
+    wifi_config.ap.password[5] = '6';
+    wifi_config.ap.password[6] = '7';
+    wifi_config.ap.password[7] = '8';
+    wifi_config.ap.ssid_len = 2;
+    wifi_config.ap.channel = ESP_WIFI_CHANNEL;
+    wifi_config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
+    wifi_config.ap.ssid_hidden = 0;
+    wifi_config.ap.max_connection = 4;
+    wifi_config.ap.beacon_interval = 100;
+    /*
     wifi_ap_config_t ap = {
-            .ssid = ESP_WIFI_SSID,
-            .password = ESP_WIFI_PASS,
+            {.ssid = ESP_WIFI_SSID},
+            {.password = ESP_WIFI_PASS,
             .ssid_len = static_cast<uint8_t>(strlen(ESP_WIFI_SSID)),
             .channel = ESP_WIFI_CHANNEL,
             .authmode = WIFI_AUTH_WPA_WPA2_PSK,
@@ -70,6 +85,7 @@ void Wifi_Init(){
             .beacon_interval = 100
     };
     wifi_config.ap = ap;
+     */
     if (strlen(ESP_WIFI_PASS) == 0) {
         wifi_config.ap.authmode = WIFI_AUTH_OPEN;
     }

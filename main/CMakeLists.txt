@@ -1,10 +1,11 @@
-idf_component_register(SRCS  "hello_world_main.cpp"
+idf_component_register(SRCS
+        "drone_main.cpp"
         "ESC_Control.cpp"
-        "I2C_General.cpp"
-        "GPS.cpp"
-        "Wifi.cpp"
-        "MPU6500.cpp"
-        "Magnetometer.cpp"
-        "Pressure.cpp"
         "GPIO_Expand.cpp"
+        "GPS.cpp"
+        "I2C_General.cpp"
+        "Magnetometer.cpp"
+        "MPU6500.cpp"
+        "Pressure.cpp"
+        "Wifi.cpp"
         INCLUDE_DIRS "")

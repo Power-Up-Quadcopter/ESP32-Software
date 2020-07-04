@@ -1,12 +1,11 @@
 
 #include <stdint.h>
-#include <MPU6050.h>
 #include "MPU6500.h"
 #include "I2C_General.h"
 
 #define mpuAddrW 208
 
-
+/*
 
 Quaternion q;           // [w, x, y, z]         quaternion container
 VectorFloat gravity;    // [x, y, z]            gravity vector
@@ -83,3 +82,5 @@ uint16_t MPU_Read16(uint8_t regAddr){
     uint16_t out = I2C_Read16(mpuAddrW, regAddr);
     return out;
 }
+
+ */

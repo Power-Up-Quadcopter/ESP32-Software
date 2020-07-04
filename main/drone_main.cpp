@@ -7,7 +7,7 @@
 #include "esp_system.h"
 #include "esp_spi_flash.h"
 #include "esp_log.h"
-#include "MPU6050.h"
+#include "MPU6500.h"
 #include "ESC_Control.h"
 #include "I2C_General.h"
 #include "GPS.h"
