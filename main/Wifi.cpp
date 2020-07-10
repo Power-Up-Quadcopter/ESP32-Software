@@ -66,50 +66,30 @@ void Wifi_startTCPServer() {
     socklen = sizeof(remote_addr);
     xEventGroupWaitBits(wifi_event_group,AP_STARTED_BIT,false,true,portMAX_DELAY);
 
-        socketHandle = socket(AF_INET, SOCK_STREAM, 0);
-        if(socketHandle < 0) {
-            ESP_LOGE(TAG, "... Failed to allocate socket.\n");
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-            return;
-        }
-        ESP_LOGI(TAG, "... allocated socket\n");
-        if(bind(socketHandle, (struct sockaddr *)&tcpServerAddr, sizeof(tcpServerAddr)) != 0) {
-            ESP_LOGE(TAG, "... socket bind failed errno=%d \n", errno);
-            close(socketHandle);
-            vTaskDelay(4000 / portTICK_PERIOD_MS);
-            return;
-        }
-        ESP_LOGI(TAG, "... socket bind done \n");
-        if(listen (socketHandle, LISTENQ) != 0) {
-            ESP_LOGE(TAG, "... socket listen failed errno=%d \n", errno);
-            close(socketHandle);
-            vTaskDelay(4000 / portTICK_PERIOD_MS);
-            return;
-        }
+    socketHandle = socket(AF_INET, SOCK_STREAM, 0);
+    if(socketHandle < 0) {
+        ESP_LOGE(TAG, "... Failed to allocate socket.\n");
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        return;
+    }
+    ESP_LOGI(TAG, "... allocated socket\n");
+    if(bind(socketHandle, (struct sockaddr *)&tcpServerAddr, sizeof(tcpServerAddr)) != 0) {
+        ESP_LOGE(TAG, "... socket bind failed errno=%d \n", errno);
+        close(socketHandle);
+        vTaskDelay(4000 / portTICK_PERIOD_MS);
+        return;
+    }
+    ESP_LOGI(TAG, "... socket bind done \n");
+    if(listen (socketHandle, LISTENQ) != 0) {
+        ESP_LOGE(TAG, "... socket listen failed errno=%d \n", errno);
+        close(socketHandle);
+        vTaskDelay(4000 / portTICK_PERIOD_MS);
+        return;
+    }
 
-        clientSocket = accept(socketHandle,(struct sockaddr *)&remote_addr, &socklen);
-        ESP_LOGI(TAG,"New TCP connection request");
+    clientSocket = accept(socketHandle,(struct sockaddr *)&remote_addr, &socklen);
+    ESP_LOGI(TAG,"New TCP connection request");
     TCPConnected = true;
-//            //set O_NONBLOCK so that recv will return, otherwise we need to impliment message end
-//            //detection logic. If know the client message format you should instead impliment logic
-//            //detect the end of message
-//            fcntl(cs,F_SETFL,O_NONBLOCK);
-//            do {
-//                bzero(recv_buf, sizeof(recv_buf));
-//                r = recv(cs, recv_buf, sizeof(recv_buf)-1,0);
-//                for(int i = 0; i < r; i++) {
-//                    putchar(recv_buf[i]);
-//                }
-//            } while(r > 0);
-//
-//            ESP_LOGI(TAG, "... done reading from socket. Last read return=%d errno=%d\r\n", r, errno);
-//
-//            char message[] = "asdf\n";
-//        }
-//        ESP_LOGI(TAG, "... server will be opened in 5 seconds");
-//        vTaskDelay(5000 / portTICK_PERIOD_MS);
-//    }
-//    ESP_LOGI(TAG, "...tcp_client task closed\n");
 }
 
 void Wifi_sendTCP(char* message, int len) {
