@@ -122,41 +122,28 @@ void I2C_Write16(uint8_t addrW, uint16_t data, uint8_t regAddr){
     ESP_ERROR_CHECK(i2c_master_cmd_begin(I2Cport,cmd, WAIT_TIME/portTICK_PERIOD_MS));
 }
 
-uint8_t I2C_Read8(uint8_t addrW, uint8_t regAddr){
+uint8_t I2C_Read8(uint8_t deviceAddress, uint8_t regAddr){
+    uint8_t data;
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    uint8_t out;
-
     i2c_master_start(cmd);
-    i2c_master_write_byte(cmd,addrW, 1);
-    i2c_master_write_byte(cmd,regAddr, 1);
+    i2c_master_write_byte(cmd, deviceAddress << 1 | WRITE_BIT, ACK_CHECK_EN);
+    i2c_master_write_byte(cmd, regAddr, ACK_CHECK_EN);
     i2c_master_start(cmd);
-    i2c_master_write_byte(cmd,addrW + 1, 1);
-    i2c_master_read_byte(cmd,&out,I2C_MASTER_LAST_NACK);
+    i2c_master_write_byte(cmd, deviceAddress << 1 | READ_BIT, ACK_CHECK_EN);
+    i2c_master_read(cmd, &data, 1, I2C_MASTER_LAST_NACK);
     i2c_master_stop(cmd);
 
-    ESP_ERROR_CHECK(i2c_master_cmd_begin(I2Cport,cmd, WAIT_TIME/portTICK_PERIOD_MS));
+    int ret = i2c_master_cmd_begin(i2c_port, cmd, 50 / portTICK_RATE_MS);
+    i2c_cmd_link_delete(cmd);
 
-    i2c_master_stop(cmd);
-    return out;
+    if(ret != 0) printf("I2C error\n");
+
+    return data;
 }
 
 
 uint16_t I2C_Read16(uint8_t addrW, uint8_t regAddr){
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    uint16_t out;
-
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd,addrW, 1);
-    i2c_master_write_byte(cmd,regAddr, 1);
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd,addrW + 1, 1);
-    i2c_master_read(cmd, (((uint8_t*) &out)+1), 2, I2C_MASTER_LAST_NACK);
-    i2c_master_stop(cmd);
-
-    ESP_ERROR_CHECK(i2c_master_cmd_begin(I2Cport,cmd, WAIT_TIME/portTICK_PERIOD_MS));
-
-    i2c_master_stop(cmd);
-    return out;
+    return (I2C_Read8(addrW, regAddr) << 8u) | (I2C_Read8(addrW, regAddr+1));
 }
 
 
