@@ -13,8 +13,8 @@
 #define ACK_CHECK_EN 0x1            /*!< I2C master will check ack from slave*/
 #define ACK_VAL 0x0                 /*!< I2C ack value */
 #define NACK_VAL 0x1                /*!< I2C nack value */
-#define CONFIG_I2C_MASTER_SCL 22
-#define CONFIG_I2C_MASTER_SDA 21
+#define CONFIG_I2C_MASTER_SCL GPIO_NUM_22
+#define CONFIG_I2C_MASTER_SDA GPIO_NUM_21
 #define CONFIG_I2C_MASTER_FREQUENCY 100000
 
 static i2c_port_t i2c_port = I2C_NUM_0;
@@ -25,7 +25,6 @@ static i2c_port_t i2c_port = I2C_NUM_0;
 
 //Initialize the I2C port we will be using
 esp_err_t I2C_Init(){
-    int i2c_master_port = i2c_port;
     i2c_config_t conf;
     conf.mode = I2C_MODE_MASTER;
     conf.sda_io_num = CONFIG_I2C_MASTER_SDA;
@@ -33,8 +32,8 @@ esp_err_t I2C_Init(){
     conf.scl_io_num = CONFIG_I2C_MASTER_SCL;
     conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
     conf.master.clk_speed = CONFIG_I2C_MASTER_FREQUENCY;
-    i2c_param_config(i2c_master_port, &conf);
-    return i2c_driver_install(i2c_master_port, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
+    i2c_param_config(i2c_port, &conf);
+    return i2c_driver_install(i2c_port, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
 }
 
 ////write a byte to a device

@@ -31,7 +31,7 @@ int magVar = 0;         //magnetic variation, fixed point resolution of 0.1
 uint8_t magVarDir = 0;  //magnetic variation direction, 0 East, 1 West
 
 
-void GPS_Loop();
+void GPS_Loop(void* ptr);
 
 
 void GPS_Init(){
@@ -62,9 +62,9 @@ void GPS_Init(){
                                         uart_buffer_size, 10, &uart_queue, 0));
 
 
-    xTaskCreate(reinterpret_cast<TaskFunction_t>(&GPS_Loop), "GPSLoop", GPS_LOOP_STACK_SIZE, NULL, 5, NULL);
-
+    xTaskCreate(&GPS_Loop, "GPSLoop", GPS_LOOP_STACK_SIZE, NULL, 5, NULL);
 }
+
 
 //splits given string into lines
 //ignores lines that reach eof before newline
@@ -190,7 +190,7 @@ void cmdParse(char* cmd){
     free(args);
 }
 
-void GPS_Loop(){
+void GPS_Loop(void* ptr){
     uart_event_t event;
     uint8_t* input = (uint8_t*) malloc(700);
     char* lines[7];
@@ -216,5 +216,66 @@ void GPS_Loop(){
 
 
 
+//bool GPSready = false;
+//
+//uint8_t data[1024];
+//char strbuffer[1024];
+//void task_gps(void *arg) {
+//    uart_config_t uart_config = {
+//            .baud_rate = 9600,
+//            .data_bits = UART_DATA_8_BITS,
+//            .parity    = UART_PARITY_DISABLE,
+//            .stop_bits = UART_STOP_BITS_1,
+//            .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+//            .source_clk = UART_SCLK_APB,
+//    };
+//    ESP_ERROR_CHECK(uart_param_config(UART_NUM_2, &uart_config));
+//    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, 32, 33, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+//
+//    QueueHandle_t uart_queue;
+//    // Install UART driver using an event queue here
+//    ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, 2048, 2048, 10, &uart_queue, 0));
+//
+//    // Read data from UART.
+//    const int uart_num = UART_NUM_2;
+//    int length = 0;
+//
+//    GPSready = true;
+//    while(1) {
+//        int x = uart_get_buffered_data_len(uart_num, (size_t *) &length);
+//        ESP_ERROR_CHECK(x);
+//        length = uart_read_bytes(uart_num, data, length, 1000);
+//        printf("%d\n", length);
+//        int strIndex = 0;
+//        for(int i = 0; i < length; i++) {
+//            if(data[i] == 13) continue;
+//            strbuffer[strIndex++] = data[i];
+//            printf("%c", (int8_t) data[i]);
+//        }
+//        strbuffer[strIndex++] = '\n';
+//        strbuffer[strIndex++] = '\n';
+//        Wifi_sendTCP(strbuffer, strIndex-1);
+//        printf("\n-----------------------------------\n");
+//        vTaskDelay(1000 / portTICK_RATE_MS);
+//    }
+//}
+//
+//void sendGPS(string msg) {
+//    uint8_t checksum = msg.data()[0];
+//    for(int i = 1; i < msg.length(); i++) {
+//        checksum ^= msg.data()[i];
+//    }
+//    stringstream sstream;
+//    sstream << hex << checksum;
+//
+//    string toSend = "$";
+//    toSend.append(msg);
+//    toSend.append("*");
+//    toSend.append(sstream.str());
+//    printf("GPS SEND: %s\n", toSend.data());
+//    toSend.append("\r\n");
+//
+//    uart_write_bytes(UART_NUM_2, toSend.data(), toSend.length());
+//}
 
 
