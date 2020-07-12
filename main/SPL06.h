@@ -44,7 +44,7 @@ class SPL06 {
 
 protected:
     int c0{}, c1{}, c00{}, c10{}, c01{}, c11{}, c20{}, c21{}, c30{};
-    const double kt = 1040384;
+    const double kt = 3670016;
     const double kp = 1040384;
 
     double get_trawsc();

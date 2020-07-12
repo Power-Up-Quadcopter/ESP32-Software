@@ -6,10 +6,10 @@
 #include "SPL06.h"
 
 void SPL06::initialize() {
-    I2C_Write8(SPL06_ADDRESS, 0b00001100, CFG_REG);  //  set result bit-shift
+    I2C_Write8(SPL06_ADDRESS, 0b00000100, CFG_REG);  //  set result bit-shift
     I2C_Write8(SPL06_ADDRESS, 0b00000111, MEAS_CFG); //  sensor config, continuous background
-    I2C_Write8(SPL06_ADDRESS, 0b11110110, TMP_CFG);  //  temp, 128 mps, 64x oversampling
-    I2C_Write8(SPL06_ADDRESS, 0b00110110, PRS_CFG); //  pressure, 8 mps, 64x oversampling
+    I2C_Write8(SPL06_ADDRESS, 0b10100010, TMP_CFG);  //  temp, 4 mps, 4x oversampling
+    I2C_Write8(SPL06_ADDRESS, 0b00100110, PRS_CFG); //  pressure, 4 mps, 64x oversampling
 
     uint8_t c_a = I2C_Read8(SPL06_ADDRESS, COEF_A);
     uint8_t c_b = I2C_Read8(SPL06_ADDRESS, COEF_B);
