@@ -217,6 +217,7 @@ void cmdParse(char* cmd){
 
     if(strcmp(args[0],"$GPRMC")==0){ //time, date, position, and speed, works well enough for our application
         if(args[1][0]!=0){
+            infoStr[TIMESTAMP_] = args[1];
             timeStamp = atoi(args[1]+4);
             args[1][4] = 0; args[1][5] = 0;
             timeStamp += 60 * atoi( args[1]+2);
@@ -224,43 +225,61 @@ void cmdParse(char* cmd){
             timeStamp += 3600 * atoi(args[1]);
         }
         if(args[2][0]!=0){
+            infoStr[STATUS_] = args[2];
             status = args[2][0]=='A';
         }
         if(args[3][0]!=0){
+            infoStr[LATPARTMINS_] = args[3]+5;
             latPartMins = atoi(args[3]+5);
+            args[3][4] = 0;
+            infoStr[LATMINUTES_] = args[3]+2;
             latMinutes  = atoi( args[3]+2);
             args[3][2] = 0; args[3][3] = 0;
+            infoStr[LATDEGREES_] = args[3];
             latDegrees   =  atoi(args[3]);
         }
         if(args[4][0]!=0){
+            infoStr[NS_] = args[4];
             NS = args[4][0]=='S';
         }
         if(args[5][0]!=0){
+            infoStr[LONGPARTMINS_] = args[5] + 5;
             longPartMins = atoi(args[5]+5);
+            args[5][4] = 0;
+            infoStr[LONGMINUTES_] = args[5] + 2;
             longMinutes  = atoi( args[5]+2);
             args[5][2] = 0; args[5][3] = 0;
-            longPartMins   =  atoi(args[5]);
+            infoStr[LONGDEGREES_] = args[4];
+            longDegrees   =  atoi(args[5]);
         }
         if(args[6][0]!=0){
-            NS = args[6][0]=='W';
+            infoStr[EW_] = args[6];
+            EW = args[6][0]=='W';
         }
         if(args[7][0]!=0){
+            infoStr[SPEED_] = args[7];
             speed = 10 * atoi(args[7]) + atoi(args[7]+4);
         }
         if(args[8][0]!=0){
+            infoStr[COURSEMADEGOOD_] = args[8];
             courseMadeGood = 10 * atoi(args[8]) + atoi(args[8]+4);
         }
         if(args[9][0]!=0){
+            infoStr[YEAR_] = args[9] + 4;
             year = atoi(args[9]+4);
             args[9][4] = 0;
+            infoStr[MONTH_] = args[9] + 2;
             month = atoi( args[9]+2);
             args[9][2] = 0;
+            infoStr[DAY_] = args[9];
             day = atoi(args[9]);
         }
         if(args[10][0]!=0){
+            infoStr[MAGVAR_] = args[10];
             magVar = 10 * atoi(args[10]) + atoi(args[10]+4);
         }
         if(args[11][0]!=0){
+            infoStr[MAGVARDIR_] = args[11];
             magVarDir = args[11][0]=='W';
         }
     }

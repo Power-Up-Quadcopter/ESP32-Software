@@ -5,10 +5,17 @@
 #include <driver/i2c.h>
 #include "stdint.h"
 
-#define SCL_PIN 22
-#define SDA_PIN 21
+#define I2C_MASTER_TX_BUF_DISABLE 0 /*!< I2C master doesn't need buffer */
+#define I2C_MASTER_RX_BUF_DISABLE 0 /*!< I2C master doesn't need buffer */
+#define WRITE_BIT I2C_MASTER_WRITE  /*!< I2C master write */
+#define READ_BIT I2C_MASTER_READ    /*!< I2C master read */
+#define ACK_CHECK_EN 0x1            /*!< I2C master will check ack from slave*/
+#define ACK_VAL 0x0                 /*!< I2C ack value */
+#define NACK_VAL 0x1                /*!< I2C nack value */
+#define CONFIG_I2C_MASTER_SCL GPIO_NUM_22
+#define CONFIG_I2C_MASTER_SDA GPIO_NUM_21
+#define CONFIG_I2C_MASTER_FREQUENCY 100000
 #define WAIT_TIME 50
-#define I2C_Freq 100000
 #define I2Cport I2C_NUM_0
 
 esp_err_t I2C_Init();
