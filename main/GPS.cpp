@@ -13,6 +13,7 @@
 using namespace std;
 
 QueueHandle_t uart_queue;
+const uart_port_t uart_num = UART_NUM_2;
 
 //see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/uart.html
 
@@ -21,6 +22,9 @@ const string warmStart_lon = "09744.648,W";
 const string warmStart_alt = "0230";
 const string warmStart_date = "11,07,2020";
 const string warmStart_time = "18,00,00";
+
+
+bool GPSready = false;
 
 int timeStamp = 0;      //UTC timestamp in seconds
 uint8_t status = 1;     //1 valid, 0 warning
@@ -39,14 +43,61 @@ uint8_t month = 1;
 int year = 2020;
 int magVar = 0;         //magnetic variation, fixed point resolution of 0.1
 uint8_t magVarDir = 0;  //magnetic variation direction, 0 East, 1 West
-
+string infoStr[17]; //array of string ptrs corresponding with info globals above, in the same order as the globals
 
 void GPS_Loop(void* ptr);
+void GPS_Task_Alec(void* ptr);
+void GPS_Task_Allen(void* arg);
+
+void sendGPS(string msg) {
+    uint8_t checksum = msg.data()[0];
+    for(int i = 1; i < msg.length(); i++) {
+        checksum ^= msg.data()[i];
+    }
+    stringstream sstream;
+    sstream << hex << checksum;
+    string toSend = "$";
+    toSend.append(msg);
+    toSend.append("*");
+    toSend.append(sstream.str());
+    printf("GPS SEND: %s\n", toSend.data());
+    toSend.append("\r\n");
+
+    uart_write_bytes(UART_NUM_2, toSend.data(), toSend.length());
+}
 
 
-void GPS_Init(){
+void GPS_warmStart() {
+    sendGPS("PSTMGPSRESTART");
 
-    const uart_port_t uart_num = UART_NUM_2;
+    string initStr = "PSTMINITGPS,";
+    initStr.append(warmStart_lat);
+    initStr.append(",");
+    initStr.append(warmStart_lon);
+    initStr.append(",");
+    initStr.append(warmStart_alt);
+    initStr.append(",");
+    initStr.append(warmStart_date);
+    initStr.append(",");
+    initStr.append(warmStart_time);
+    sendGPS(initStr);
+
+    sendGPS("PSTMWARM");
+}
+
+void GPS_configMessages() {
+    sendGPS("PSTMSETPAR,1201,10,2");   // GPVTG off
+    sendGPS("PSTMSETPAR,1201,800000,2");   // PSTMCPU off
+    sendGPS("PSTMSETPAR,1201,40,2");   // GPRMC off
+    sendGPS("PSTMSETPAR,1201,40,2");   // GPRMC off
+    sendGPS("PSTMSETPAR,1201,20,2");   // PSTMNOISE off
+    sendGPS("PSTMSETPAR,1201,4,1");   // GNGSA on
+    sendGPS("PSTMSETPAR,1201,80000,1");   // GPGSV on
+    sendGPS("PSTMSETPAR,1201,100000,1");   // GPGLL on
+    sendGPS("PSTMSETPAR,1201,1000000,1");   // GPZDA on
+}
+
+void GPS_Init(bool warmStart){
     uart_config_t uart_config = {
             .baud_rate = 9600,
             .data_bits = UART_DATA_8_BITS,
@@ -71,10 +122,46 @@ void GPS_Init(){
     ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, uart_buffer_size, \
                                         uart_buffer_size, 10, &uart_queue, 0));
 
+    GPS_configMessages();
+    if(warmStart) {GPS_warmStart();}
 
-    xTaskCreate(&GPS_Loop, "GPSLoop", GPS_LOOP_STACK_SIZE, NULL, 5, NULL);
+
+    xTaskCreate(GPSTASK, "GPSLoop", GPS_LOOP_STACK_SIZE, NULL, 5, NULL);
 }
 
+
+void GPS_sendTCP(GPS_send_type_t type){
+    string tosend = "GPS_INFO\n";
+    tosend.append(infoStr[STATUS_] + "\n");
+    if(type==TIME_DATE || type==ALL){
+        tosend.append("TIME_DATE\n");
+        tosend.append(infoStr[TIMESTAMP_] + "\n");
+        tosend.append(infoStr[DAY_] + "\n");
+        tosend.append(infoStr[MONTH_] + "\n");
+        tosend.append(infoStr[YEAR_] + "\n");
+    }
+    if(type==LOCATION || type==ALL){
+        tosend.append("LOCATION\n");
+        tosend.append(infoStr[NS_] + "\n");
+        tosend.append(infoStr[LATDEGREES_] + "\n");
+        tosend.append(infoStr[LATMINUTES_] + "\n");
+        tosend.append(infoStr[LATPARTMINS_] + "\n");
+        tosend.append(infoStr[EW_] + "\n");
+        tosend.append(infoStr[LONGDEGREES_] + "\n");
+        tosend.append(infoStr[LONGMINUTES_] + "\n");
+        tosend.append(infoStr[LONGPARTMINS_] + "\n");
+
+    }
+    if(type==SPEED_DIR || type==ALL){
+        tosend.append("SPEED_DIR\n");
+        tosend.append(infoStr[SPEED_] + "\n");
+        tosend.append(infoStr[COURSEMADEGOOD_] + "\n");
+        tosend.append(infoStr[MAGVAR_] + "\n");
+        tosend.append(infoStr[MAGVARDIR_] + "\n");
+    }
+
+    Wifi_sendTCP((char*) tosend.c_str(), tosend.size());
+}
 
 //splits given string into lines
 //ignores lines that reach eof before newline
@@ -200,118 +287,46 @@ void cmdParse(char* cmd){
     free(args);
 }
 
-void GPS_Loop(void* ptr){
+void GPS_Task_Alec(void* ptr){
     uart_event_t event;
     uint8_t* input = (uint8_t*) malloc(700);
     char* lines[7];
+    int inputLen = 0;
     while(1){
-        if(xQueueReceive(uart_queue, (void * )&event, (portTickType)portMAX_DELAY)) {
-            if(event.type == UART_BREAK){
-                int inputLen = uart_read_bytes(UART_NUM_2, input, 699, 100);
-                input[inputLen] = 0;
-                uart_flush(UART_NUM_2);
-                int numLines = getLines(input, lines);
-                for(int i=0; i<numLines; i++){
-                    cmdParse(lines[i]);
-                    free(lines[i]);
-                }
-                input[0] = 0;
-            }
-
+        ESP_ERROR_CHECK(uart_get_buffered_data_len(uart_num, (size_t *) &inputLen));
+        inputLen = uart_read_bytes(UART_NUM_2, input, 699, 5/portTICK_RATE_MS);
+        input[inputLen] = 0;
+        int numLines = getLines(input, lines);
+        for(int i=0; i<numLines; i++){
+            cmdParse(lines[i]);
+            free(lines[i]);
         }
-
-
+        input[0] = 0;
+        vTaskDelay(1000 / portTICK_RATE_MS);
     }
 }
 
-bool GPSready = false;
-
-void sendGPS(string msg) {
-    uint8_t checksum = msg.data()[0];
-    for(int i = 1; i < msg.length(); i++) {
-        checksum ^= msg.data()[i];
-    }
-    stringstream sstream;
-    sstream << hex << checksum;
-
-    string toSend = "$";
-    toSend.append(msg);
-    toSend.append("*");
-    toSend.append(sstream.str());
-    printf("GPS SEND: %s\n", toSend.data());
-    toSend.append("\r\n");
-
-    uart_write_bytes(UART_NUM_2, toSend.data(), toSend.length());
-}
-
-void GPS_configMessages() {
-    sendGPS("PSTMSETPAR,1201,10,2");   // GPVTG off
-    sendGPS("PSTMSETPAR,1201,800000,2");   // PSTMCPU off
-    sendGPS("PSTMSETPAR,1201,40,2");   // GPRMC off
-    sendGPS("PSTMSETPAR,1201,40,2");   // GPRMC off
-    sendGPS("PSTMSETPAR,1201,20,2");   // PSTMNOISE off
-    sendGPS("PSTMSETPAR,1201,4,1");   // GNGSA on
-    sendGPS("PSTMSETPAR,1201,80000,1");   // GPGSV on
-    sendGPS("PSTMSETPAR,1201,100000,1");   // GPGLL on
-    sendGPS("PSTMSETPAR,1201,1000000,1");   // GPZDA on
-}
-
-void GPS_warmStart() {
-    sendGPS("PSTMGPSRESTART");
-
-    string initStr = "PSTMINITGPS,";
-    initStr.append(warmStart_lat);
-    initStr.append(",");
-    initStr.append(warmStart_lon);
-    initStr.append(",");
-    initStr.append(warmStart_alt);
-    initStr.append(",");
-    initStr.append(warmStart_date);
-    initStr.append(",");
-    initStr.append(warmStart_time);
-    sendGPS(initStr);
-
-    sendGPS("PSTMWARM");
-}
 
 uint8_t data[512];
 char strbuffer[512];
-void task_gps(void *arg) {
-    uart_config_t uart_config = {
-            .baud_rate = 9600,
-            .data_bits = UART_DATA_8_BITS,
-            .parity    = UART_PARITY_DISABLE,
-            .stop_bits = UART_STOP_BITS_1,
-            .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-            .source_clk = UART_SCLK_APB,
-    };
-    ESP_ERROR_CHECK(uart_param_config(UART_NUM_2, &uart_config));
-    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, 32, 33, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+void GPS_Task_Allen(void *arg) {
 
-    QueueHandle_t uart_queue;
-    // Install UART driver using an event queue here
-    ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, 2048, 2048, 10, &uart_queue, 0));
-
-    // Read data from UART.
-    const int uart_num = UART_NUM_2;
     int length = 0;
-
     GPSready = true;
     while(1) {
-        int x = uart_get_buffered_data_len(uart_num, (size_t *) &length);
-        ESP_ERROR_CHECK(x);
+        ESP_ERROR_CHECK(uart_get_buffered_data_len(uart_num, (size_t *) &length));
         length = uart_read_bytes(uart_num, data, length, 5/portTICK_RATE_MS);
         printf("%d\n", length);
         int strIndex = 0;
         for(int i = 0; i < length; i++) {
-            if(data[i] == 13) continue;
-            strbuffer[strIndex++] = data[i];
-            printf("%c", (int8_t) data[i]);
+            if (data[i] == '\r') {
+                strbuffer[strIndex++] = data[i];
+                printf("%c", (int8_t) data[i]);
+            }
         }
         strbuffer[strIndex++] = '\n';
         strbuffer[strIndex++] = '\n';
         Wifi_sendTCP(strbuffer, strIndex-1);
-        printf("\n-----------------------------------\n");
         vTaskDelay(1000 / portTICK_RATE_MS);
     }
 }

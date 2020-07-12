@@ -2,6 +2,35 @@
 #ifndef ESP32_SOFTWARE_GPS_H
 #define ESP32_SOFTWARE_GPS_H
 
+#define GPSTASK &GPS_Task_Alec
+
+typedef enum {
+    ALL = 0,
+    TIME_DATE = 1,
+    LOCATION = 2,
+    SPEED_DIR = 3,
+} GPS_send_type_t;
+
+typedef enum {
+    TIMESTAMP_ = 0,
+    STATUS_ = 1,
+    NS_ = 2,
+    LATDEGREES_ = 3,
+    LATMINUTES_ = 4,
+    LATPARTMINS_ = 5,
+    EW_ = 6,
+    LONGDEGREES_ = 7,
+    LONGMINUTES_ = 8,
+    LONGPARTMINS_ = 9,
+    SPEED_ = 10,
+    COURSEMADEGOOD_ = 11,
+    DAY_ = 12,
+    MONTH_ = 13,
+    YEAR_ = 14,
+    MAGVAR_ = 15,
+    MAGVARDIR_ = 16,
+} GPS_globals_ind;
+
 extern int timeStamp;     //UTC timestamp in seconds
 extern uint8_t status;     //1 valid, 0 warning
 extern uint8_t NS;         //0 North, 1 South
@@ -20,9 +49,7 @@ extern int year;
 extern int magVar;         //magnetic variation, fixed point resolution of 0.1
 extern uint8_t magVarDir;  //magnetic variation direction, 0 East, 1 West
 
-void GPS_Init();
-void task_gps(void *arg);
-void GPS_warmStart();
-void GPS_configMessages();
+void GPS_Init(bool warmStart);
+void GPS_sendTCP(GPS_send_type_t type);
 
 #endif //ESP32_SOFTWARE_GPS_H

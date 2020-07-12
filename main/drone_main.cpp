@@ -42,30 +42,19 @@ void app_main() {
     }
     ESP_ERROR_CHECK(ret);
 
-
     ESP_ERROR_CHECK(I2C_Init());
     spl06.initialize();
 //    Esc_Init();
 //    GPS_Init();
     Wifi_Init();
-
-    //TEST CODE HERE
-//    printf("TEST: Output 50 Percent in ESC0\n");
-//    Esc_Set(0, 50);
-    //END TEST AREA
-
-//    Wifi_startTCPServer();
+    Wifi_startTCPServer();
 
     //create the DroneLoop task
     xTaskCreate(&DroneLoop, "DroneLoop", 4096, NULL, 4, NULL);
-//    xTaskCreate(&task_gps, "GPSTask", 2048, NULL, 4, NULL);
 }
 
 //arduino loop function equivalent
 void DroneLoop(void* arg){
-
-//    vTaskDelay(5000 / portTICK_PERIOD_MS);
-//    GPS_warmStart();
 
     while (1){
         printf("Temp: %0.2f\n", spl06.getTemperature());
