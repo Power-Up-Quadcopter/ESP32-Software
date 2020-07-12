@@ -6,6 +6,7 @@ idf_component_register(SRCS
         "I2C_General.cpp"
         "Magnetometer.cpp"
         "MPU6500.cpp"
-        "Pressure.cpp"
+        "SPL06.cpp"
         "Wifi.cpp"
+        "Utils.cpp"
         INCLUDE_DIRS "")

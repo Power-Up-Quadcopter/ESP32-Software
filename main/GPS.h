@@ -21,5 +21,8 @@ extern int magVar;         //magnetic variation, fixed point resolution of 0.1
 extern uint8_t magVarDir;  //magnetic variation direction, 0 East, 1 West
 
 void GPS_Init();
+void task_gps(void *arg);
+void GPS_warmStart();
+void GPS_configMessages();
 
 #endif //ESP32_SOFTWARE_GPS_H

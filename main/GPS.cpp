@@ -1,16 +1,26 @@
 
-#include <string.h>
 #include <driver/uart.h>
 #include <esp_log.h>
 #include "GPS.h"
+#include <sstream>
+#include <string.h>
+#include "Wifi.h"
 
 #define GPS_LOOP_STACK_SIZE 2048
 #define GPSRX 33
 #define GPSTX 32
 
+using namespace std;
+
 QueueHandle_t uart_queue;
 
 //see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/uart.html
+
+const string warmStart_lat = "3017.057,N";
+const string warmStart_lon = "09744.648,W";
+const string warmStart_alt = "0230";
+const string warmStart_date = "11,07,2020";
+const string warmStart_time = "18,00,00";
 
 int timeStamp = 0;      //UTC timestamp in seconds
 uint8_t status = 1;     //1 valid, 0 warning
@@ -214,68 +224,96 @@ void GPS_Loop(void* ptr){
     }
 }
 
+bool GPSready = false;
 
+void sendGPS(string msg) {
+    uint8_t checksum = msg.data()[0];
+    for(int i = 1; i < msg.length(); i++) {
+        checksum ^= msg.data()[i];
+    }
+    stringstream sstream;
+    sstream << hex << checksum;
 
-//bool GPSready = false;
-//
-//uint8_t data[1024];
-//char strbuffer[1024];
-//void task_gps(void *arg) {
-//    uart_config_t uart_config = {
-//            .baud_rate = 9600,
-//            .data_bits = UART_DATA_8_BITS,
-//            .parity    = UART_PARITY_DISABLE,
-//            .stop_bits = UART_STOP_BITS_1,
-//            .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-//            .source_clk = UART_SCLK_APB,
-//    };
-//    ESP_ERROR_CHECK(uart_param_config(UART_NUM_2, &uart_config));
-//    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, 32, 33, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
-//
-//    QueueHandle_t uart_queue;
-//    // Install UART driver using an event queue here
-//    ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, 2048, 2048, 10, &uart_queue, 0));
-//
-//    // Read data from UART.
-//    const int uart_num = UART_NUM_2;
-//    int length = 0;
-//
-//    GPSready = true;
-//    while(1) {
-//        int x = uart_get_buffered_data_len(uart_num, (size_t *) &length);
-//        ESP_ERROR_CHECK(x);
-//        length = uart_read_bytes(uart_num, data, length, 1000);
-//        printf("%d\n", length);
-//        int strIndex = 0;
-//        for(int i = 0; i < length; i++) {
-//            if(data[i] == 13) continue;
-//            strbuffer[strIndex++] = data[i];
-//            printf("%c", (int8_t) data[i]);
-//        }
-//        strbuffer[strIndex++] = '\n';
-//        strbuffer[strIndex++] = '\n';
-//        Wifi_sendTCP(strbuffer, strIndex-1);
-//        printf("\n-----------------------------------\n");
-//        vTaskDelay(1000 / portTICK_RATE_MS);
-//    }
-//}
-//
-//void sendGPS(string msg) {
-//    uint8_t checksum = msg.data()[0];
-//    for(int i = 1; i < msg.length(); i++) {
-//        checksum ^= msg.data()[i];
-//    }
-//    stringstream sstream;
-//    sstream << hex << checksum;
-//
-//    string toSend = "$";
-//    toSend.append(msg);
-//    toSend.append("*");
-//    toSend.append(sstream.str());
-//    printf("GPS SEND: %s\n", toSend.data());
-//    toSend.append("\r\n");
-//
-//    uart_write_bytes(UART_NUM_2, toSend.data(), toSend.length());
-//}
+    string toSend = "$";
+    toSend.append(msg);
+    toSend.append("*");
+    toSend.append(sstream.str());
+    printf("GPS SEND: %s\n", toSend.data());
+    toSend.append("\r\n");
+
+    uart_write_bytes(UART_NUM_2, toSend.data(), toSend.length());
+}
+
+void GPS_configMessages() {
+    sendGPS("PSTMSETPAR,1201,10,2");   // GPVTG off
+    sendGPS("PSTMSETPAR,1201,800000,2");   // PSTMCPU off
+    sendGPS("PSTMSETPAR,1201,40,2");   // GPRMC off
+    sendGPS("PSTMSETPAR,1201,40,2");   // GPRMC off
+    sendGPS("PSTMSETPAR,1201,20,2");   // PSTMNOISE off
+    sendGPS("PSTMSETPAR,1201,4,1");   // GNGSA on
+    sendGPS("PSTMSETPAR,1201,80000,1");   // GPGSV on
+    sendGPS("PSTMSETPAR,1201,100000,1");   // GPGLL on
+    sendGPS("PSTMSETPAR,1201,1000000,1");   // GPZDA on
+}
+
+void GPS_warmStart() {
+    sendGPS("PSTMGPSRESTART");
+
+    string initStr = "PSTMINITGPS,";
+    initStr.append(warmStart_lat);
+    initStr.append(",");
+    initStr.append(warmStart_lon);
+    initStr.append(",");
+    initStr.append(warmStart_alt);
+    initStr.append(",");
+    initStr.append(warmStart_date);
+    initStr.append(",");
+    initStr.append(warmStart_time);
+    sendGPS(initStr);
+
+    sendGPS("PSTMWARM");
+}
+
+uint8_t data[512];
+char strbuffer[512];
+void task_gps(void *arg) {
+    uart_config_t uart_config = {
+            .baud_rate = 9600,
+            .data_bits = UART_DATA_8_BITS,
+            .parity    = UART_PARITY_DISABLE,
+            .stop_bits = UART_STOP_BITS_1,
+            .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+            .source_clk = UART_SCLK_APB,
+    };
+    ESP_ERROR_CHECK(uart_param_config(UART_NUM_2, &uart_config));
+    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, 32, 33, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+
+    QueueHandle_t uart_queue;
+    // Install UART driver using an event queue here
+    ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, 2048, 2048, 10, &uart_queue, 0));
+
+    // Read data from UART.
+    const int uart_num = UART_NUM_2;
+    int length = 0;
+
+    GPSready = true;
+    while(1) {
+        int x = uart_get_buffered_data_len(uart_num, (size_t *) &length);
+        ESP_ERROR_CHECK(x);
+        length = uart_read_bytes(uart_num, data, length, 5/portTICK_RATE_MS);
+        printf("%d\n", length);
+        int strIndex = 0;
+        for(int i = 0; i < length; i++) {
+            if(data[i] == 13) continue;
+            strbuffer[strIndex++] = data[i];
+            printf("%c", (int8_t) data[i]);
+        }
+        strbuffer[strIndex++] = '\n';
+        strbuffer[strIndex++] = '\n';
+        Wifi_sendTCP(strbuffer, strIndex-1);
+        printf("\n-----------------------------------\n");
+        vTaskDelay(1000 / portTICK_RATE_MS);
+    }
+}
 
 

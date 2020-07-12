@@ -1,9 +1,7 @@
 
 #include <stdio.h>
-#include <string>
 #include <nvs_flash.h>
 #include <tcpip_adapter.h>
-#include <sstream>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
@@ -14,6 +12,7 @@
 #include "ESC_Control.h"
 #include "I2C_General.h"
 #include "GPS.h"
+#include "SPL06.h"
 #include "Wifi.h"
 #include "Magnetometer.h"
 
@@ -25,11 +24,11 @@ extern "C" {
     void app_main();
 };
 
-
 //Note: If not using OpenOCD, run using "mingw32-make.exe flash" in the terminal below
 
-void DroneLoop(void*);
+SPL06 spl06;
 
+void DroneLoop(void*);
 
 //arduino setup function equivalent
 void app_main() {
@@ -45,6 +44,7 @@ void app_main() {
 
 
     ESP_ERROR_CHECK(I2C_Init());
+    spl06.initialize();
 //    Esc_Init();
 //    GPS_Init();
     Wifi_Init();
@@ -57,33 +57,28 @@ void app_main() {
 //    Wifi_startTCPServer();
 
     //create the DroneLoop task
-    xTaskCreate(&DroneLoop, "DroneLoop", MAIN_LOOP_STACK_SIZE, NULL, 4, NULL);
+    xTaskCreate(&DroneLoop, "DroneLoop", 4096, NULL, 4, NULL);
+//    xTaskCreate(&task_gps, "GPSTask", 2048, NULL, 4, NULL);
 }
 
 //arduino loop function equivalent
-void DroneLoop(void* ptr){
+void DroneLoop(void* arg){
 
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
+//    vTaskDelay(5000 / portTICK_PERIOD_MS);
+//    GPS_warmStart();
 
     while (1){
-        //TODO put crap here
-        if(magReady){
-            printf("-------------\n"
-                   "Temp:%d\n"
-                   "Mag X,Y,Z: %d, %d, %d"
-                   ,magData.temp,magData.x,magData.y,magData.z);
-        }
-        //TEST CODE HERE
-        //printf("Looping\n");
-        //END TEST AREA
+        printf("Temp: %0.2f\n", spl06.getTemperature());
+        printf("Pressure: %0.2f\n", spl06.getPressure());
+        printf("Altitude: %0.2f\n", spl06.getAltitude());
+        printf("-----------------------\n");
 
-//        string msg = "PSTMCFGANTSENS,2,1,0,0,0,1,8,150,500";
-
-
-
-//  TCP Test message
-//        char message[] = "lololol\n";
-//        Wifi_sendTCP(message);
+//        if(magReady){
+//            printf("-------------\n"
+//                   "Temp:%d\n"
+//                   "Mag X,Y,Z: %d, %d, %d"
+//                   ,magData.temp,magData.x,magData.y,magData.z);
+//        }
 
 //  I2C GPIO Expander LED Blink
 //        int chip_addr = 0x20;
