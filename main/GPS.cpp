@@ -47,7 +47,6 @@ string infoStr[17]; //array of string ptrs corresponding with info globals above
 
 void GPS_Loop(void* ptr);
 void GPS_Task_Alec(void* ptr);
-void GPS_Task_Allen(void* arg);
 
 void sendGPS(string msg) {
     uint8_t checksum = msg.data()[0];
@@ -122,7 +121,7 @@ void GPS_Init(bool warmStart){
     ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, uart_buffer_size, \
                                         uart_buffer_size, 10, &uart_queue, 0));
 
-    GPS_configMessages();
+//    GPS_configMessages();
     if(warmStart) {GPS_warmStart();}
 
 
@@ -338,13 +337,14 @@ void GPS_Task_Allen(void *arg) {
         printf("%d\n", length);
         int strIndex = 0;
         for(int i = 0; i < length; i++) {
-            if (data[i] == '\r') {
+            if (data[i] != '\r') {
                 strbuffer[strIndex++] = data[i];
                 printf("%c", (int8_t) data[i]);
             }
         }
         strbuffer[strIndex++] = '\n';
         strbuffer[strIndex++] = '\n';
+        printf("\n-----------------------------------\n");
         Wifi_sendTCP(strbuffer, strIndex-1);
         vTaskDelay(1000 / portTICK_RATE_MS);
     }

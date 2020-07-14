@@ -2,7 +2,8 @@
 #ifndef ESP32_SOFTWARE_GPS_H
 #define ESP32_SOFTWARE_GPS_H
 
-#define GPSTASK &GPS_Task_Alec
+//#define GPSTASK &GPS_Task_Alec
+#define GPSTASK &GPS_Task_Allen
 
 typedef enum {
     ALL = 0,
@@ -49,7 +50,8 @@ extern int year;
 extern int magVar;         //magnetic variation, fixed point resolution of 0.1
 extern uint8_t magVarDir;  //magnetic variation direction, 0 East, 1 West
 
-void GPS_Init(bool warmStart);
+extern void GPS_Init(bool warmStart);
 void GPS_sendTCP(GPS_send_type_t type);
+extern void GPS_Task_Allen(void* arg);
 
 #endif //ESP32_SOFTWARE_GPS_H

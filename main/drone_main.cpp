@@ -45,9 +45,9 @@ void app_main() {
     ESP_ERROR_CHECK(I2C_Init());
     spl06.initialize();
 //    Esc_Init();
-//    GPS_Init();
+    GPS_Init(true);
     Wifi_Init();
-    Wifi_startTCPServer();
+//    Wifi_startTCPServer();
 
     //create the DroneLoop task
     xTaskCreate(&DroneLoop, "DroneLoop", 4096, NULL, 4, NULL);
@@ -57,10 +57,10 @@ void app_main() {
 void DroneLoop(void* arg){
 
     while (1){
-        printf("Temp: %0.2f\n", spl06.getTemperature());
-        printf("Pressure: %0.2f\n", spl06.getPressure());
-        printf("Altitude: %0.2f\n", spl06.getAltitude());
-        printf("-----------------------\n");
+//        printf("Temp: %0.2f\n", spl06.getTemperature());
+//        printf("Pressure: %0.2f\n", spl06.getPressure());
+//        printf("Altitude: %0.2f\n", spl06.getAltitude());
+//        printf("-----------------------\n");
 
 //        if(magReady){
 //            printf("-------------\n"
