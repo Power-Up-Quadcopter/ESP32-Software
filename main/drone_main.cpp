@@ -61,9 +61,13 @@ void DroneLoop(void* arg){
 
     while (1){
         gpioExpand.set_bit(gpioExpand.A1, 1);
+        gpioExpand.set_bit(gpioExpand.A0, 1);
+        gpioExpand.set_bit(gpioExpand.A2, 1);
         printf("turning on...\n");
         vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
         gpioExpand.set_bit(gpioExpand.A1, 0);
+        gpioExpand.set_bit(gpioExpand.A0, 0);
+        gpioExpand.set_bit(gpioExpand.A2, 0);
         printf("turning offffff...\n");
 
 //        printf("Temp: %0.2f\n", spl06.getTemperature());

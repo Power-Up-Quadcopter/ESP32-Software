@@ -189,9 +189,9 @@ void GPIO_Expand::set_bit(uint8_t pin, uint8_t bit){
     uint8_t port = -1;
     // Determines if Port A or Port B
     if(pin == this->A0 || pin == this->A1 || pin == this->A2 || pin == this->A3 || pin == this->A4 || pin == this->A5 || pin == this->A6 || pin == this->A7)
-        port = 0x13;
+        port = 0x12;
     else if(pin == this->B0 || pin == this->B1 || pin == this->B2 || pin == this->B3 || pin == this->B4 || pin == this->B5 || pin == this->B6 || pin == this->B7)
-        port = 0x14;
+        port = 0x13;
 
     if(port == (uint8_t)-1)
         return;
