@@ -20,34 +20,34 @@ public:
     uint8_t ADIR = 0, BDIR = 0;
 
     // Initializes registers to their initial state
-    void expander_init()
+    void initialize();
 
     // Sets the I/O direction of a specific pin to the given bit value
-    void set_dir_bit(uint8_t pin, uint8_t bit)
+    void set_dir_bit(uint8_t pin, uint8_t bit);
 
     // Sets the entire Direction register of the specified port (A or B)
-    void set_dir_reg(uint8_t byte, uint8_t port)
+    void set_dir_reg(uint8_t byte, uint8_t port);
 
     // Gets a specific direction bit
-    uint8_t get_dir_bit(uint8_t pin)
+    uint8_t get_dir_bit(uint8_t pin);
 
     // Gets the entire bit pattern of the Direction register
-    uint8_t get_dir_reg(uint8_t port)
+    uint8_t get_dir_reg(uint8_t port);
 
     // Sets the Pull Up Resistor bit of a specific pin to the given bit value
-    void set_pur_bit(uint8_t pin, uint8_t bit)
+    void set_pur_bit(uint8_t pin, uint8_t bit);
 
     // Sets the entire bit pattern of the Pull Up Resistor Register
-    void set_pur_reg(uint8_t byte, uint8_t port)
+    void set_pur_reg(uint8_t byte, uint8_t port);
 
     // Reads a specific GPIO bit
-    uint8_t read_bit(uint8_t pin)
+    uint8_t read_bit(uint8_t pin);
 
     // Reads the entire bit pattern of the GPIO register data
-    uint8_t read_port(uint8_t port)
+    uint8_t read_port(uint8_t port);
 
     // Sets the specified output bit of the GPIO register data
-    void set_bit(uint8_t pin, uint8_t bit)
+    void set_bit(uint8_t pin, uint8_t bit);
 
 };
 

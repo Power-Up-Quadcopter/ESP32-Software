@@ -15,6 +15,7 @@
 #include "SPL06.h"
 #include "Wifi.h"
 #include "Magnetometer.h"
+#include "GPIO_Expand.h"
 
 #define MAIN_LOOP_STACK_SIZE 2048
 
@@ -27,6 +28,7 @@ extern "C" {
 //Note: If not using OpenOCD, run using "mingw32-make.exe flash" in the terminal below
 
 SPL06 spl06;
+GPIO_Expand gpioExpand;
 
 void DroneLoop(void*);
 
@@ -43,10 +45,11 @@ void app_main() {
     ESP_ERROR_CHECK(ret);
 
     ESP_ERROR_CHECK(I2C_Init());
-    spl06.initialize();
+//    spl06.initialize();
 //    Esc_Init();
-    GPS_Init(true);
-    Wifi_Init();
+//    GPS_Init(true);
+//    Wifi_Init();
+    gpioExpand.initialize();
 //    Wifi_startTCPServer();
 
     //create the DroneLoop task
@@ -57,6 +60,12 @@ void app_main() {
 void DroneLoop(void* arg){
 
     while (1){
+        gpioExpand.set_bit(gpioExpand.A1, 1);
+        printf("turning on...\n");
+        vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
+        gpioExpand.set_bit(gpioExpand.A1, 0);
+        printf("turning offffff...\n");
+
 //        printf("Temp: %0.2f\n", spl06.getTemperature());
 //        printf("Pressure: %0.2f\n", spl06.getPressure());
 //        printf("Altitude: %0.2f\n", spl06.getAltitude());
