@@ -81,7 +81,7 @@ void DroneLoop(void* arg){
 //            I2C_Write8(chip_addr, 0b000, 0x12);
 //            vTaskDelay(1000 / portTICK_RATE_MS);
 //        }
-
+        printf("hi\n");
         vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
 
     }
