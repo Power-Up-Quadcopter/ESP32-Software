@@ -1,3 +1,4 @@
+
 idf_component_register(SRCS
         "drone_main.cpp"
         "ESC_Control.cpp"
@@ -9,4 +10,5 @@ idf_component_register(SRCS
         "SPL06.cpp"
         "Wifi.cpp"
         "Utils.cpp"
+        "SD.cpp"
         INCLUDE_DIRS "")

@@ -1,12 +1,7 @@
 
 #include "ESC_Control.h"
-#include <stdio.h>
 #include <driver/ledc.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_system.h"
 #include "esp_spi_flash.h"
-#include "driver/gpio.h"
 
 #define ESC_STACK_SIZE 2048
 
@@ -21,7 +16,7 @@ const uint8_t escPins[] = {ESC0_PIN,ESC1_PIN,ESC2_PIN,ESC3_PIN};
 const ledc_channel_t escChannels[] = {LEDC_CHANNEL_1,LEDC_CHANNEL_2,LEDC_CHANNEL_3,LEDC_CHANNEL_4};
 
 //set up ESC pins for PWM
-void Esc_Init(){
+void init(){
 
     ledc_channel_config_t ledc_channel_ESC0 = {
         .gpio_num   = ESC0_PIN,
@@ -95,7 +90,7 @@ void Esc_Init(){
 
 //takes in esc #0-3 and power from  0-100
 //sets up PWM output to corresponding ESC
-void Esc_Set(uint8_t esc, uint8_t power){
+void set(uint8_t esc, uint8_t power){
     assert(esc<4);
     assert(power<=100);
     float fraction  = power/100.0F;

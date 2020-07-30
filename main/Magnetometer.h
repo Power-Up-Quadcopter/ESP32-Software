@@ -25,23 +25,27 @@ typedef struct{
     int16_t temp;
 } MAGDATA_t;
 
+namespace Mag{
+
 extern MAGDATA_t magData;
 extern uint8_t magReady;
 
-void Mag_Init();
+void init();
 
 //write an 8bit value to specific register
-void Mag_Write8(uint8_t data, uint8_t regAddr);
+void write8(uint8_t data, uint8_t regAddr);
 
 //write a 16 bit value to two sequential registers
 //takes the high bit register b/c mpu auto increments register after r/w
-void Mag_Write16(uint16_t data, uint8_t regAddr);
+void write16(uint16_t data, uint8_t regAddr);
 
 //read an 8bit value from specific register
-uint8_t Mag_Read8(uint8_t regAddr);
+uint8_t read8(uint8_t regAddr);
 
 //read a 16 bit value from two sequential registers
 //takes the high bit register b/c mpu auto increments register after r/w
-uint16_t Mag_Read16(uint8_t regAddr);
+uint16_t read16(uint8_t regAddr);
+
+}
 
 #endif //ESP32_SOFTWARE_MAGNETOMETER_H

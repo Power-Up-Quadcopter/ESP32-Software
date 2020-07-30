@@ -2,8 +2,10 @@
 #ifndef ESP32_SOFTWARE_GPS_H
 #define ESP32_SOFTWARE_GPS_H
 
-//#define GPSTASK &GPS_Task_Alec
-#define GPSTASK &GPS_Task_Allen
+#include <string>
+
+#define GPSTASK &task_Alec
+//#define GPSTASK &task_Allen
 
 typedef enum {
     ALL = 0,
@@ -32,26 +34,30 @@ typedef enum {
     MAGVARDIR_ = 16,
 } GPS_globals_ind;
 
-extern int timeStamp;     //UTC timestamp in seconds
-extern uint8_t status;     //1 valid, 0 warning
-extern uint8_t NS;         //0 North, 1 South
-extern int latDegrees;
-extern int latMinutes;
-extern int latPartMins;    //fixed point resolution of .00001
-extern uint8_t EW;         //0 East, 1 West
-extern int longDegrees;
-extern int longMinutes;
-extern int longPartMins;   //fixed point resolution of .00001
-extern int speed;          //speed in knots, fixed point resolution of 0.1
-extern int courseMadeGood; //direction of actual travel, NOT heading, fixed point resolution of 0.1
-extern uint8_t day;
-extern uint8_t month;
-extern int year;
-extern int magVar;         //magnetic variation, fixed point resolution of 0.1
-extern uint8_t magVarDir;  //magnetic variation direction, 0 East, 1 West
+namespace GPS {
+    extern int timeStamp;     //UTC timestamp in seconds
+    extern uint8_t status;     //1 valid, 0 warning
+    extern uint8_t NS;         //0 North, 1 South
+    extern int latDegrees;
+    extern int latMinutes;
+    extern int latPartMins;    //fixed point resolution of .00001
+    extern uint8_t EW;         //0 East, 1 West
+    extern int longDegrees;
+    extern int longMinutes;
+    extern int longPartMins;   //fixed point resolution of .00001
+    extern int speed;          //speed in knots, fixed point resolution of 0.1
+    extern int courseMadeGood; //direction of actual travel, NOT heading, fixed point resolution of 0.1
+    extern uint8_t day;
+    extern uint8_t month;
+    extern int year;
+    extern int magVar;         //magnetic variation, fixed point resolution of 0.1
+    extern uint8_t magVarDir;  //magnetic variation direction, 0 East, 1 West
 
-extern void GPS_Init(bool warmStart);
-void GPS_sendTCP(GPS_send_type_t type);
-extern void GPS_Task_Allen(void* arg);
+    extern void init(bool isWarmStart);
+
+    extern std::string send(GPS_send_type_t type);
+
+    extern void task_Allen(void *arg);
+}
 
 #endif //ESP32_SOFTWARE_GPS_H

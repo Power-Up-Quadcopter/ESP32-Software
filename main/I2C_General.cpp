@@ -35,10 +35,10 @@ void I2C_Write8(uint8_t addrW, uint8_t data, uint8_t regAddr){
     i2c_master_write_byte(cmd, data, ACK_CHECK_EN);
     i2c_master_stop(cmd);
 
-    int ret = i2c_master_cmd_begin(i2c_port, cmd, 50 / portTICK_RATE_MS);
+    esp_err_t ret = i2c_master_cmd_begin(i2c_port, cmd, 50 / portTICK_RATE_MS);
     i2c_cmd_link_delete(cmd);
 
-    if(ret != 0) printf("I2C error\n");
+    if(ret != 0) printf("I2C error: %s\n", esp_err_to_name(ret));
 
 }
 
@@ -68,7 +68,7 @@ uint8_t I2C_Read8(uint8_t deviceAddress, uint8_t regAddr){
     int ret = i2c_master_cmd_begin(i2c_port, cmd, 50 / portTICK_RATE_MS);
     i2c_cmd_link_delete(cmd);
 
-    if(ret != 0) printf("I2C error\n");
+    if(ret != 0) printf("I2C error: %s\n", esp_err_to_name(ret));
 
     return data;
 }

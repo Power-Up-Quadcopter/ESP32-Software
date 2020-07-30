@@ -15,6 +15,8 @@
 #include "SPL06.h"
 #include "Wifi.h"
 #include "Magnetometer.h"
+#include "GPIO_Expand.h"
+#include "SD.h"
 
 #define MAIN_LOOP_STACK_SIZE 2048
 
@@ -28,7 +30,7 @@ extern "C" {
 
 SPL06 spl06;
 
-void DroneLoop(void*);
+[[noreturn]] void DroneLoop(void*);
 
 //arduino setup function equivalent
 void app_main() {
@@ -44,17 +46,19 @@ void app_main() {
 
     ESP_ERROR_CHECK(I2C_Init());
     spl06.initialize();
-//    Esc_Init();
-    GPS_Init(true);
-    Wifi_Init();
-//    Wifi_startTCPServer();
+//    Esc::init();
+    GPS::init(false);
+    Wifi::init();
+    Expand::init();
+//    Wifi::startTCPServer();
+    SD::init();
 
     //create the DroneLoop task
     xTaskCreate(&DroneLoop, "DroneLoop", 4096, NULL, 4, NULL);
 }
 
 //arduino loop function equivalent
-void DroneLoop(void* arg){
+[[noreturn]] void DroneLoop(void* arg){
 
     while (1){
 //        printf("Temp: %0.2f\n", spl06.getTemperature());
@@ -81,8 +85,9 @@ void DroneLoop(void* arg){
 //            I2C_Write8(chip_addr, 0b000, 0x12);
 //            vTaskDelay(1000 / portTICK_RATE_MS);
 //        }
-        printf("hi\n");
-        vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
+        printf("%s", GPS::send(ALL).c_str());
 
+
+        vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
     }
 }
