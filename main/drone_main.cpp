@@ -45,13 +45,15 @@ void app_main() {
     ESP_ERROR_CHECK(ret);
 
     ESP_ERROR_CHECK(I2C_Init());
+    SD::init();
     spl06.initialize();
 //    Esc::init();
-    GPS::init(false);
+//    GPS::init(true);
     Wifi::init();
     Expand::init();
+
+
 //    Wifi::startTCPServer();
-    SD::init();
 
     //create the DroneLoop task
     xTaskCreate(&DroneLoop, "DroneLoop", 4096, NULL, 4, NULL);
@@ -85,7 +87,7 @@ void app_main() {
 //            I2C_Write8(chip_addr, 0b000, 0x12);
 //            vTaskDelay(1000 / portTICK_RATE_MS);
 //        }
-        printf("%s", GPS::send(ALL).c_str());
+//        printf("%s", GPS::send(ALL).c_str());
 
 
         vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
