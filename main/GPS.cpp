@@ -6,7 +6,7 @@
 #include <string.h>
 #include "Wifi.h"
 
-#define GPS_LOOP_STACK_SIZE 2048
+#define GPS_LOOP_STACK_SIZE 4096
 #define GPSRX 33
 #define GPSTX 32
 
@@ -18,11 +18,11 @@ namespace GPS {
 
 //see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/uart.html
 
-    const string warmStart_lat = "3017.057,N";
-    const string warmStart_lon = "09744.648,W";
-    const string warmStart_alt = "0230";
-    const string warmStart_date = "11,07,2020";
-    const string warmStart_time = "18,00,00";
+    const string warmStart_lat = "2938.000,N";
+    const string warmStart_lon = "09836.648,W";
+    const string warmStart_alt = "0375";
+    const string warmStart_date = "30,07,2020";
+    const string warmStart_time = "00,42,00";
 
 
     bool GPSready = false;
@@ -67,10 +67,11 @@ namespace GPS {
         uart_write_bytes(UART_NUM_2, toSend.data(), toSend.length());
     }
 
+    void coldStart(){
+        sendGPS("PSTMCOLD");
+    }
 
     void warmStart() {
-        sendGPS("PSTMGPSRESTART");
-
         string initStr = "PSTMINITGPS,";
         initStr.append(warmStart_lat);
         initStr.append(",");
@@ -125,6 +126,8 @@ namespace GPS {
 
 //    GPS_configMessages();
         if (isWarmStart) { warmStart(); }
+        else{coldStart();}
+
 
 
         xTaskCreate(GPSTASK, "GPSLoop", GPS_LOOP_STACK_SIZE, NULL, 5, NULL);
@@ -198,7 +201,7 @@ namespace GPS {
         for (int i = 0; in[i] != 0; i++) {
             while (in[i] == ',') {
                 out[outPos][outPos2] = 0;
-                out[++outPos] = (char *) malloc(20);
+                out[++outPos] = (char *) malloc(40);
                 outPos2 = 0;
                 i++;
             }
@@ -216,8 +219,9 @@ namespace GPS {
     void cmdParse(char *cmd) {
         char **args = (char **) malloc(sizeof(char *) * 20);
         int numArgs = cmdHelper(cmd, args);
-
-        if (strcmp(args[0], "$GPRMC") == 0) { //time, date, position, and speed, works well enough for our application
+        //NMEA messages
+        //except for ones that start with PSTM, those are chip specific
+        if (strcmp(args[0], "$GPRMC") == 0) { //position, velocity time
             if (args[1][0] != 0) {
                 infoStr[TIMESTAMP_] = args[1];
                 timeStamp = atoi(args[1] + 4);
@@ -288,20 +292,19 @@ namespace GPS {
                 infoStr[MAGVARDIR_] = args[11];
                 magVarDir = args[11][0] == 'W';
             }
-        } else if (strcmp(args[0], "$GPGGA") == 0) { //long, lat, satellite stats
+        } else if (strcmp(args[0], "$GPGGA") == 0) { //	Time, position, and fix related data
             ;
-        } else if (strcmp(args[0], "$GPVTG") == 0) { //course relative to ground, and ground speed
+        } else if (strcmp(args[0], "$GPVTG") == 0) { //Actual track made good and speed over ground
             ;
-        } else if (strcmp(args[0], "$GNGSA") == 0) { //no clue, doesnt appear in the manual
+        } else if (strcmp(args[0], "$GNGSA") == 0) { //GPS DOP and active satellites
             ;
-        } else if (strcmp(args[0], "$GPGLL") == 0) { //GPS long, lat
+        } else if (strcmp(args[0], "$GPGLL") == 0) { //	Position data: position fix, time of position fix, and status
             ;
         } else if (strcmp(args[0], "$PSTMCPU") == 0) { //pulse per second data
             ;
         } else {
             printf("Invalid command: %s\n", args[0]);
         }
-
         for (int i = 0; i < numArgs; i++) { free(args[i]); }
         free(args);
     }
