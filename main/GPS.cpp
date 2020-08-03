@@ -128,8 +128,6 @@ namespace GPS {
         if (isWarmStart) { warmStart(); }
         else{coldStart();}
 
-
-
         xTaskCreate(GPSTASK, "GPSLoop", GPS_LOOP_STACK_SIZE, NULL, 5, NULL);
     }
 

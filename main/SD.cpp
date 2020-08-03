@@ -57,28 +57,40 @@ namespace SD{
 
         if (ret != ESP_OK) {
             if (ret == ESP_FAIL) {
-                ESP_LOGE("SD", "Failed to mount filesystem. "
-                              "If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.");
+                ESP_LOGE("SD", "Failed to mount filesystem. ");
             } else {
                 ESP_LOGE("SD", "Failed to initialize the card (%s). "
-                              "Make sure SD card lines have pull-up resistors in place.", esp_err_to_name(ret));
+                              "Make sure you have an SD card in the slot", esp_err_to_name(ret));
             }
             return;
         }
 
-        ESP_LOGI("SD", "Opening file");
-        std::string line;
-        std::ifstream myfile (mount_point + "/hello1.txt");
-        if (myfile.is_open())
+        ESP_LOGI("SD", "Writing to file");
+        std::ofstream myfile1 (mount_point + "/haha.txt");
+        if (myfile1.is_open())
         {
-            while ( getline (myfile,line) )
-            {
-                std::cout << line << '\n';
-            }
-            myfile.close();
+            myfile1 << "ESP32 was here\n";
+            myfile1.close();
         }
-
-        else ESP_LOGE("SD", "Failed to open file");;
+        else{
+            ESP_LOGE("SD", "Failed to write to file");
+            return;
+        }
+        ESP_LOGI("SD", "Reading from file");
+        std::string output;
+        std::string line;
+        std::ifstream myfile2 (mount_point + "/haha.txt");
+        if (myfile2.is_open())
+        {
+            while ( getline (myfile2,line) )
+            {
+               output.append(line + "\n");
+            }
+            myfile2.close();
+            printf("%s",output.c_str());
+        }
+        else ESP_LOGE("SD", "Failed to read file");;
     }
+
 
 }
