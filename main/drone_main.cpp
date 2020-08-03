@@ -18,7 +18,7 @@
 #include "GPIO_Expand.h"
 #include "SD.h"
 
-#define MAIN_LOOP_STACK_SIZE 2048
+#define MAIN_LOOP_STACK_SIZE 4096
 
 using namespace std;
 
@@ -44,19 +44,17 @@ void app_main() {
     }
     ESP_ERROR_CHECK(ret);
 
+    Wifi::init();
     ESP_ERROR_CHECK(I2C_Init());
     SD::init();
     spl06.initialize();
 //    Esc::init();
 //    GPS::init(true);
-    Wifi::init();
     Expand::init();
 
 
-//    Wifi::startTCPServer();
-
     //create the DroneLoop task
-    xTaskCreate(&DroneLoop, "DroneLoop", 4096, NULL, 4, NULL);
+    xTaskCreate(&DroneLoop, "DroneLoop", MAIN_LOOP_STACK_SIZE, NULL, 4, NULL);
 }
 
 //arduino loop function equivalent
@@ -90,6 +88,17 @@ void app_main() {
 //        printf("%s", GPS::send(ALL).c_str());
 
 
+//        Expand::setPinData(GPA0,1);
+//        vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
+//        Expand::setPinData(GPA1,1);
+//        vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
+//        Expand::setPinData(GPA2,1);
+//        vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
+//        Expand::setPinData(GPA0,0);
+//        vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
+//        Expand::setPinData(GPA1,0);
+//        vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
+//        Expand::setPinData(GPA2,0);
         vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
     }
 }

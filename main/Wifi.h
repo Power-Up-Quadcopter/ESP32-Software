@@ -6,10 +6,8 @@
 namespace Wifi{
 
     void init();
-
-    void startTCPServer();
     void sendTCP(char* message, int len);
-
+    void sendUDP(char* message, int len);
 }
 
 
