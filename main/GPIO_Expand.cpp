@@ -49,18 +49,18 @@ namespace Expand {
     }
 
     void setPinDir(pin_t pin, bool dir) {
-        uint8_t addr = (pin > 7) ? IODIRA : IODIRB;
-        uint8_t offset = (pin > 7) ? pin : pin - 8;
-        uint8_t *port = (pin > 7) ? &portA : &portB;
+        uint8_t addr = (pin < 8) ? IODIRA : IODIRB;
+        uint8_t offset = (pin < 8) ? pin : pin - 8;
+        uint8_t *port = (pin < 8) ? &portA : &portB;
 
         *port = (*port & ~(0x1u << offset)) | (dir << offset);
         write8(*port, addr);
     }
 
     void setPinData(pin_t pin, bool on){
-        uint8_t addr = (pin>7) ? GPIOA : GPIOB;
-        uint8_t offset = (pin>7) ? pin : pin-8;
-        uint8_t *port = (pin>7) ? &portA : &portB;
+        uint8_t addr = (pin < 8) ? GPIOA : GPIOB;
+        uint8_t offset = (pin < 8) ? pin : pin-8;
+        uint8_t *port = (pin < 8) ? &portA : &portB;
 
         *port = (*port & ~(0x1u << offset)) | (on << offset);
         write8(*port, addr);

@@ -2,6 +2,26 @@
 #ifndef ESP32_SOFTWARE_GPIO_EXPAND_H
 #define ESP32_SOFTWARE_GPIO_EXPAND_H
 
+typedef enum{
+    GPA0 = 0,
+    GPA1 = 1,
+    GPA2 = 2,
+    GPA3 = 3,
+    GPA4 = 4,
+    GPA5 = 5,
+    GPA6 = 6,
+    GPA7 = 7,
+    GPB0 = 8,
+    GPB1 = 9,
+    GPB2 = 10,
+    GPB3 = 11,
+    GPB4 = 12,
+    GPB5 = 13,
+    GPB6 = 14,
+    GPB7 = 15
+}pin_t;
+
+
 namespace Expand{
 
     //put useful defines for register addresses here
@@ -15,24 +35,6 @@ namespace Expand{
     extern uint8_t portA;
     extern uint8_t portB;
 
-    typedef enum{
-        PIN0_A = 0,
-        PIN1_A = 1,
-        PIN2_A = 2,
-        PIN3_A = 3,
-        PIN4_A = 4,
-        PIN5_A = 5,
-        PIN6_A = 6,
-        PIN7_A = 7,
-        PIN0_B = 8,
-        PIN1_B = 9,
-        PIN2_B = 10,
-        PIN3_B = 11,
-        PIN4_B = 12,
-        PIN5_B = 13,
-        PIN6_B = 14,
-        PIN7_B = 15
-    }pin_t;
 
 
     //Initialize all to output, PUR off, level low
