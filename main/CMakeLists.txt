@@ -11,4 +11,6 @@ idf_component_register(SRCS
         "Wifi.cpp"
         "Utils.cpp"
         "SD.cpp"
+        "Communication.cpp"
+        "Control.cpp"
         INCLUDE_DIRS "")
