@@ -27,8 +27,12 @@
 
 namespace Wifi {
 
-    void sendTCP(char* message, int len);
-    void sendUDP(char* message, int len);
+    SemaphoreHandle_t xMutexU;
+    SemaphoreHandle_t xMutexT;
+
+
+    void sendTCP(char* message, int len, bool isTask);
+    void sendUDP(char* message, int len, bool isTask);
 
     const int CLIENT_CONNECTED_BIT = BIT0;
     const int CLIENT_DISCONNECTED_BIT = BIT1;
@@ -78,47 +82,54 @@ namespace Wifi {
         socklen = sizeof(remote_addr);
         xEventGroupWaitBits(wifi_event_group, AP_STARTED_BIT, false, true, portMAX_DELAY);
 
-        TCPsocketHandle = socket(AF_INET, SOCK_STREAM, 0);
-        if (TCPsocketHandle < 0) {
-            ESP_LOGE(TAG, "... Failed to allocate socket.\n");
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-            vTaskDelete(xTaskGetCurrentTaskHandle());
-            return;
-        }
-        ESP_LOGI(TAG, "... allocated socket\n");
-        if (bind(TCPsocketHandle, (struct sockaddr *) &tcpServerAddr, sizeof(tcpServerAddr)) != 0) {
-            ESP_LOGE(TAG, "... socket bind failed errno=%d \n", errno);
-            close(TCPsocketHandle);
-            vTaskDelay(4000 / portTICK_PERIOD_MS);
-            vTaskDelete(xTaskGetCurrentTaskHandle());
-            return;
-        }
-        ESP_LOGI(TAG, "... socket bind done \n");
-        if (listen(TCPsocketHandle, LISTENQ) != 0) {
-            ESP_LOGE(TAG, "... socket listen failed errno=%d \n", errno);
-            close(TCPsocketHandle);
-            vTaskDelay(4000 / portTICK_PERIOD_MS);
-            vTaskDelete(xTaskGetCurrentTaskHandle());
-            return;
-        }
-        while(1){
-            TCPClientSocket = accept(TCPsocketHandle, (struct sockaddr *) &remote_addr, &socklen);
+        while(1) {
+            TCPsocketHandle = socket(AF_INET, SOCK_STREAM, 0);
             if (TCPsocketHandle < 0) {
-                ESP_LOGE(TAG, "Unable to accept connection: errno %d", errno);
-                break;
+                ESP_LOGE(TAG, "... Failed to allocate socket.\n");
+                vTaskDelay(1000 / portTICK_PERIOD_MS);
+                vTaskDelete(xTaskGetCurrentTaskHandle());
+                return;
             }
-            ESP_LOGI(TAG, "New TCP connection request");
-            TCPConnected = true;
-            int len = recv(TCPClientSocket, recv_buf, sizeof(recv_buf) - 1, 0);
-            if (len < 0) {
-                ESP_LOGE(TAG, "recv failed: errno %d", errno);
-                break;
+            ESP_LOGI(TAG, "... allocated socket\n");
+            if (bind(TCPsocketHandle, (struct sockaddr *) &tcpServerAddr, sizeof(tcpServerAddr)) != 0) {
+                ESP_LOGE(TAG, "... socket bind failed errno=%d \n", errno);
+                close(TCPsocketHandle);
+                vTaskDelay(4000 / portTICK_PERIOD_MS);
+                vTaskDelete(xTaskGetCurrentTaskHandle());
+                return;
             }
-            else{
-                len = Talk::parse((uint8_t*) recv_buf, (uint8_t*) send_buf, len);
-                if(len>0){
-                    sendTCP(send_buf, len);
+            ESP_LOGI(TAG, "... socket bind done \n");
+            if (listen(TCPsocketHandle, LISTENQ) != 0) {
+                ESP_LOGE(TAG, "... socket listen failed errno=%d \n", errno);
+                close(TCPsocketHandle);
+                vTaskDelay(4000 / portTICK_PERIOD_MS);
+                vTaskDelete(xTaskGetCurrentTaskHandle());
+                return;
+            }
+            while (1) {
+                TCPClientSocket = accept(TCPsocketHandle, (struct sockaddr *) &remote_addr, &socklen);
+                xSemaphoreTake(xMutexT, portMAX_DELAY);
+                if (TCPsocketHandle < 0) {
+                    ESP_LOGE(TAG, "Unable to accept connection: errno %d", errno);
+                    close(TCPClientSocket);
+                    break;
                 }
+                ESP_LOGI(TAG, "New TCP connection request");
+                TCPConnected = true;
+                int len = recv(TCPClientSocket, recv_buf, sizeof(recv_buf) - 1, 0);
+                if (len < 0) {
+                    ESP_LOGE(TAG, "recv failed: errno %d", errno);
+                    close(TCPClientSocket);
+                    break;
+                } else {
+                    len = Talk::parse((uint8_t *) recv_buf, (uint8_t *) send_buf, len);
+                    if (len > 0) {
+
+                        sendTCP(send_buf, len, true);
+                    }
+                    xSemaphoreGive(xMutexT);
+                }
+
             }
         }
         vTaskDelete(xTaskGetCurrentTaskHandle());
@@ -158,6 +169,8 @@ namespace Wifi {
                 socklen_t socklenIn = sizeof(source_addr);
                 int len = recvfrom(UDPsocketHandle, recv_buf, sizeof(recv_buf) - 1, 0, (struct sockaddr *) &source_addr,
                                    &socklenIn);
+                source_addr.sin_port = 5414;
+                xSemaphoreTake( xMutexU, portMAX_DELAY );
                 if (len < 0) {
                     ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
                     break;
@@ -165,31 +178,37 @@ namespace Wifi {
 
                 len = Talk::parse((uint8_t*) recv_buf, (uint8_t*) send_buf, len);
                 if(len>0){
-                    sendUDP(send_buf, len);
+
+                    sendUDP(send_buf, len, true);
                 }
+                xSemaphoreGive( xMutexU );
             }
         }
         vTaskDelete(xTaskGetCurrentTaskHandle());
     }
 
 
-    void sendTCP(char* message, int len) {
+    void sendTCP(char* message, int len, bool isTask=false) {
         if (!TCPConnected) return;
+        if(!isTask) xSemaphoreTake( xMutexT, portMAX_DELAY );
         if (write(TCPClientSocket, message, len) < 0) {
             ESP_LOGE(TAG, "... Send failed \n");
-            close(TCPsocketHandle);
-            vTaskDelay(4000 / portTICK_PERIOD_MS);
+            if(!isTask) xSemaphoreGive( xMutexT );
+            return;
         }
+        if(!isTask) xSemaphoreGive( xMutexT );
         ESP_LOGI(TAG, "... socket send success");
     }
 
-    void sendUDP(char* message, int len) {
+    void sendUDP(char* message, int len, bool isTask=false) {
         if(!UDPConnected) return;
+        if(!isTask) xSemaphoreTake( xMutexU, portMAX_DELAY );
         if ( sendto(UDPsocketHandle, message, len, 0, (const struct sockaddr*) &source_addr, sizeof(source_addr)) < 0 ) {
             ESP_LOGE(TAG, "... Send failed \n");
-            close(UDPsocketHandle);
-            vTaskDelay(4000 / portTICK_PERIOD_MS);
+            if(!isTask) xSemaphoreGive( xMutexU );
+            return;
         }
+        if(!isTask) xSemaphoreGive( xMutexU );
         ESP_LOGI(TAG, "... socket send success");
     }
 
@@ -246,6 +265,8 @@ namespace Wifi {
         ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s password:%s channel:%d",
                  ESP_WIFI_SSID, ESP_WIFI_PASS, ESP_WIFI_CHANNEL);
 
+        xMutexU = xSemaphoreCreateMutex();
+        xMutexT = xSemaphoreCreateMutex();
         xTaskCreate(&TCPServer, "TCPServer", SERVER_TASK_STACK_SIZE, NULL, 4, NULL);
         xTaskCreate(&UDPServer, "UDPServer", SERVER_TASK_STACK_SIZE, NULL, 4, NULL);
     }
