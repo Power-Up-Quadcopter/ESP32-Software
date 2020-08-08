@@ -15,18 +15,19 @@ using namespace std;
 namespace GPS {
     QueueHandle_t uart_queue;
     const uart_port_t uart_num = UART_NUM_2;
-
+    SemaphoreHandle_t xMutex;
 //see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/uart.html
 
-    const string warmStart_lat = "2938.000,N";
-    const string warmStart_lon = "09836.648,W";
+    const string warmStart_lat = "2964.010,N";
+    const string warmStart_lon = "09867.648,W";
     const string warmStart_alt = "0375";
-    const string warmStart_date = "30,07,2020";
-    const string warmStart_time = "00,42,00";
+    const string warmStart_date = "7,08,2020";
+    const string warmStart_time = "19,08,00";
 
 
-    bool GPSready = false;
+    bool GPSready = false; //true if we have sight of at least 1 satellite
 
+    int times = 0;
     int timeStamp = 0;      //UTC timestamp in seconds
     uint8_t status = 1;     //1 valid, 0 warning
     uint8_t NS = 0;         //0 North, 1 South
@@ -44,6 +45,7 @@ namespace GPS {
     int year = 2020;
     int magVar = 0;         //magnetic variation, fixed point resolution of 0.1
     uint8_t magVarDir = 0;  //magnetic variation direction, 0 East, 1 West
+    uint8_t totSats;
     string infoStr[17]; //array of string ptrs corresponding with info globals above, in the same order as the globals
 
     void GPS_Loop(void *ptr);
@@ -51,9 +53,9 @@ namespace GPS {
     void task_Alec(void *ptr);
 
     void sendGPS(string msg) {
-        uint8_t checksum = msg.data()[0];
+        uint8_t checksum = msg.c_str()[0];
         for (int i = 1; i < msg.length(); i++) {
-            checksum ^= msg.data()[i];
+            checksum ^= msg.c_str()[i];
         }
         stringstream sstream;
         sstream << hex << checksum;
@@ -61,10 +63,12 @@ namespace GPS {
         toSend.append(msg);
         toSend.append("*");
         toSend.append(sstream.str());
-        printf("GPS SEND: %s\n", toSend.data());
+        printf("GPS SEND: %s\n", toSend.c_str());
         toSend.append("\r\n");
-
-        uart_write_bytes(UART_NUM_2, toSend.data(), toSend.length());
+        xSemaphoreTake( xMutex, portMAX_DELAY );
+        uart_write_bytes(UART_NUM_2, toSend.c_str(), toSend.length());
+        uart_wait_tx_done(UART_NUM_2, 100 / portTICK_RATE_MS);
+        xSemaphoreGive( xMutex );
     }
 
     void coldStart(){
@@ -85,6 +89,15 @@ namespace GPS {
         sendGPS(initStr);
 
         sendGPS("PSTMWARM");
+        sendGPS("PSTMSETPAR,1200,220000,1"); //enable GLONAS tracking
+        sendGPS("PSTMSETPAR,1201,80040");
+        sendGPS("PSTMSAVEPAR");
+//        sendGPS("PSTMSETPAR,1201,80040");
+//
+//       sendGPS("PSTMSETPAR,1228,10,1");
+//        uart_wait_tx_done(UART_NUM_2, 50 / portTICK_RATE_MS);
+//        sendGPS("PSTMSAVEPAR");
+        uart_wait_tx_done(UART_NUM_2, 50 / portTICK_RATE_MS);
     }
 
     void configMessages() {
@@ -124,6 +137,7 @@ namespace GPS {
         ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, uart_buffer_size, \
                                         uart_buffer_size, 10, &uart_queue, 0));
 
+        xMutex = xSemaphoreCreateMutex();
 //    GPS_configMessages();
         if (isWarmStart) { warmStart(); }
         else{coldStart();}
@@ -166,6 +180,53 @@ namespace GPS {
         return tosend;
     }
 
+    //exports GPS position telemetry for use in UDP packets
+    //see Communication protocol document in drive
+    string posTelemety(){
+
+        char out[9];
+        out[0] = 0x11;
+
+        xSemaphoreTake( xMutex, portMAX_DELAY );
+        int tempMinutes = (latMinutes*100000) + latPartMins;
+        int tempMinutes2 = ((longDegrees&0x100)<<15) | ((longMinutes*100000) + longPartMins);
+        out[1] = *((uint*) &latDegrees);
+        out[5] = *((char*) &longDegrees);
+        xSemaphoreGive( xMutex );
+
+        out[2] = *(((char*) &tempMinutes)+2);
+        out[3] = *(((char*) &tempMinutes)+1);
+        out[4] = *(((char*) &tempMinutes));
+
+        out[6] = *(((char*) &tempMinutes2)+2);
+        out[7] = *(((char*) &tempMinutes2)+1);
+        out[8] = *(((char*) &tempMinutes2));
+
+        return string(out);
+    }
+
+    //exports GPS misc telemetry for use in UDP packets
+    //see Communication protocol document in drive
+    string miscTelemety(){
+
+        char out[6];
+        out[0] = 0x12;
+
+        xSemaphoreTake( xMutex, portMAX_DELAY );
+        int tempTime = timeStamp;
+        uint8_t satStats = (GPSready<<7) + totSats;
+        xSemaphoreGive( xMutex );
+
+        out[1] = *(((char*) &tempTime)+3);
+        out[2] = *(((char*) &tempTime)+2);
+        out[3] = *(((char*) &tempTime)+1);
+        out[4] = *(((char*) &tempTime));
+
+        out[5] = satStats;
+
+        return string(out);
+    }
+
 //splits given string into lines
 //ignores lines that reach eof before newline
 //ignores lines that dont start with $
@@ -195,7 +256,7 @@ namespace GPS {
     int cmdHelper(char *in, char **out) {
         int outPos = 0;
         int outPos2 = 0;
-        out[0] = (char *) malloc(20);
+        out[0] = (char *) malloc(40);
         for (int i = 0; in[i] != 0; i++) {
             while (in[i] == ',') {
                 out[outPos][outPos2] = 0;
@@ -220,6 +281,7 @@ namespace GPS {
         //NMEA messages
         //except for ones that start with PSTM, those are chip specific
         if (strcmp(args[0], "$GPRMC") == 0) { //position, velocity time
+            ESP_LOGI("GPS", "%s\n",cmd);
             if (args[1][0] != 0) {
                 infoStr[TIMESTAMP_] = args[1];
                 timeStamp = atoi(args[1] + 4);
@@ -296,12 +358,18 @@ namespace GPS {
             ;
         } else if (strcmp(args[0], "$GNGSA") == 0) { //GPS DOP and active satellites
             ;
+        } else if (strcmp(args[0]+3, "GSV") == 0) { //GNSS Satellites in View
+            ESP_LOGW("GPS", "%s\n",cmd);
+            if(args[4][0]!=0){
+                totSats = atoi(args[4]);
+                GPSready = true;
+            }
         } else if (strcmp(args[0], "$GPGLL") == 0) { //	Position data: position fix, time of position fix, and status
             ;
         } else if (strcmp(args[0], "$PSTMCPU") == 0) { //pulse per second data
             ;
         } else {
-            printf("Invalid command: %s\n", args[0]);
+            ESP_LOGW("GPS", "Invalid command: %s\n",cmd);
         }
         for (int i = 0; i < numArgs; i++) { free(args[i]); }
         free(args);
@@ -313,19 +381,20 @@ namespace GPS {
         char *lines[7];
         int inputLen = 0;
         while (1) {
+            xSemaphoreTake( xMutex, portMAX_DELAY );
             ESP_ERROR_CHECK(uart_get_buffered_data_len(uart_num, (size_t *) &inputLen));
-
-            inputLen = uart_read_bytes(UART_NUM_2, input, 699, 5 / portTICK_RATE_MS);
-            input[inputLen] = 0;
+            inputLen = uart_read_bytes(UART_NUM_2, input, min(inputLen,699), 10 / portTICK_RATE_MS);
+            input[min(inputLen,699)] = 0;
             int numLines = getLines(input, lines);
             for (int i = 0; i < numLines; i++) {
-                printf("%s\n", lines[i]);
                 cmdParse(lines[i]);
                 free(lines[i]);
             }
             input[0] = 0;
-            vTaskDelay(1000 / portTICK_RATE_MS);
+            xSemaphoreGive( xMutex );
+            vTaskDelay(250 / portTICK_RATE_MS);
         }
+        vTaskDelete(xTaskGetCurrentTaskHandle());
     }
 
 
@@ -335,7 +404,7 @@ namespace GPS {
     void task_Allen(void *arg) {
 
         int length = 0;
-        GPSready = true;
+
         while (1) {
             ESP_ERROR_CHECK(uart_get_buffered_data_len(uart_num, (size_t *) &length));
             length = uart_read_bytes(uart_num, data, length, 5 / portTICK_RATE_MS);
@@ -353,6 +422,7 @@ namespace GPS {
             Wifi::sendTCP(strbuffer, strIndex - 1);
             vTaskDelay(1000 / portTICK_RATE_MS);
         }
+
     }
 
 }

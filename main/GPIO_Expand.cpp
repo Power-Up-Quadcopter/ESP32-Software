@@ -12,24 +12,24 @@ namespace Expand {
 
     void init() {
         // Set all pins default to output
-        I2C_Write8(expandAddrW, 0x00, IODIRA);
-        I2C_Write8(expandAddrW, 0x00, IODIRB);
+        write8(0x00, IODIRA);
+        write8(0x00, IODIRB);
         //Configure pin behavior
-        I2C_Write8(expandAddrW, 0x00, 0x0A); //Check
-        I2C_Write8(expandAddrW, 0x00, 0x0B); //Check
+        write8(0x00, 0x0A); //Check
+        write8(0x00, 0x0B); //Check
         // Set all PUR default to off
-        I2C_Write8(expandAddrW, 0x00, GPPUA);
-        I2C_Write8(expandAddrW, 0x00, GPPUB);
+        write8(0x00, GPPUA);
+        write8(0x00, GPPUB);
         //all pins low
-        I2C_Write8(expandAddrW, 0x00, GPIOA);
-        I2C_Write8(expandAddrW, 0x00, GPIOB);
+        write8(0x00, GPIOA);
+        write8(0x00, GPIOB);
 
         portA = 0;
         portB = 0;
     }
 
     void write8(uint8_t data, uint8_t regAddr) {
-        I2C_Write8(expandAddrW, data, regAddr);
+        I2C_Write8_fast(expandAddrW, data, regAddr);
     }
 
 

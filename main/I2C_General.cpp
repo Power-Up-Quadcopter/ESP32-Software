@@ -25,6 +25,31 @@ esp_err_t I2C_Init(){
     conf.master.clk_speed = CONFIG_I2C_MASTER_FREQUENCY;
     i2c_param_config(i2c_port, &conf);
     return i2c_driver_install(i2c_port, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
+
+//    i2c_config_t conf2;
+//    conf2.mode = I2C_MODE_MASTER;
+//    conf2.sda_io_num = CONFIG_I2C_MASTER_SDA;
+//    conf2.sda_pullup_en = GPIO_PULLUP_ENABLE;
+//    conf2.scl_io_num = CONFIG_I2C_MASTER_SCL;
+//    conf2.scl_pullup_en = GPIO_PULLUP_ENABLE;
+//    conf2.master.clk_speed = 1000000;
+//    i2c_param_config(I2C_NUM_1, &conf2);
+//    return i2c_driver_install(I2C_NUM_1, conf2.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
+}
+
+void I2C_Write8_fast(uint8_t addrW, uint8_t data, uint8_t regAddr){
+    I2C_Write8(addrW, data, regAddr);
+//    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+//    i2c_master_start(cmd);
+//    i2c_master_write_byte(cmd, addrW << 1 | WRITE_BIT, ACK_CHECK_EN);
+//    i2c_master_write_byte(cmd, regAddr, ACK_CHECK_EN);
+//    i2c_master_write_byte(cmd, data, ACK_CHECK_EN);
+//    i2c_master_stop(cmd);
+//
+//    esp_err_t ret = i2c_master_cmd_begin(I2C_NUM_1, cmd, 50 / portTICK_RATE_MS);
+//    i2c_cmd_link_delete(cmd);
+//
+//    if(ret != 0) printf("I2C write8_fast error: w %s\n", esp_err_to_name(ret));
 }
 
 void I2C_Write8(uint8_t addrW, uint8_t data, uint8_t regAddr){

@@ -14,14 +14,16 @@
 #define NACK_VAL 0x1                /*!< I2C nack value */
 #define CONFIG_I2C_MASTER_SCL GPIO_NUM_22
 #define CONFIG_I2C_MASTER_SDA GPIO_NUM_21
-#define CONFIG_I2C_MASTER_FREQUENCY 100000
+#define CONFIG_I2C_MASTER_FREQUENCY 400000
 #define WAIT_TIME 50
 #define I2Cport I2C_NUM_0
+#define GPIOport I2C_NUM_1
 
 esp_err_t I2C_Init();
 
 //  ---dont use these functions outside of drivers, use driver specific functions---
 
+void I2C_Write8_fast(uint8_t addrW, uint8_t data, uint8_t regAddr);
 //write an 8bit value to specific register
 void I2C_Write8(uint8_t addrW, uint8_t data, uint8_t regAddr);
 

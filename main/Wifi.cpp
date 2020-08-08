@@ -18,7 +18,7 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-#define SERVER_TASK_STACK_SIZE 2048
+#define SERVER_TASK_STACK_SIZE 4096
 
 #define ESP_WIFI_SSID      "PowerUp"
 #define ESP_WIFI_PASS      ""
@@ -82,7 +82,7 @@ namespace Wifi {
         if (TCPsocketHandle < 0) {
             ESP_LOGE(TAG, "... Failed to allocate socket.\n");
             vTaskDelay(1000 / portTICK_PERIOD_MS);
-            vTaskDelete(NULL);
+            vTaskDelete(xTaskGetCurrentTaskHandle());
             return;
         }
         ESP_LOGI(TAG, "... allocated socket\n");
@@ -90,7 +90,7 @@ namespace Wifi {
             ESP_LOGE(TAG, "... socket bind failed errno=%d \n", errno);
             close(TCPsocketHandle);
             vTaskDelay(4000 / portTICK_PERIOD_MS);
-            vTaskDelete(NULL);
+            vTaskDelete(xTaskGetCurrentTaskHandle());
             return;
         }
         ESP_LOGI(TAG, "... socket bind done \n");
@@ -98,7 +98,7 @@ namespace Wifi {
             ESP_LOGE(TAG, "... socket listen failed errno=%d \n", errno);
             close(TCPsocketHandle);
             vTaskDelay(4000 / portTICK_PERIOD_MS);
-            vTaskDelete(NULL);
+            vTaskDelete(xTaskGetCurrentTaskHandle());
             return;
         }
         while(1){
@@ -114,12 +114,14 @@ namespace Wifi {
                 ESP_LOGE(TAG, "recv failed: errno %d", errno);
                 break;
             }
-            len = Talk::parse((uint8_t*) recv_buf, (uint8_t*) send_buf, len);
-            if(len>0){
-                sendTCP(send_buf, len);
+            else{
+                len = Talk::parse((uint8_t*) recv_buf, (uint8_t*) send_buf, len);
+                if(len>0){
+                    sendTCP(send_buf, len);
+                }
             }
         }
-        vTaskDelete(NULL);
+        vTaskDelete(xTaskGetCurrentTaskHandle());
     }
 
     struct sockaddr_in source_addr;
@@ -167,7 +169,7 @@ namespace Wifi {
                 }
             }
         }
-        vTaskDelete(NULL);
+        vTaskDelete(xTaskGetCurrentTaskHandle());
     }
 
 

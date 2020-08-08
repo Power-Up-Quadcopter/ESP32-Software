@@ -10,7 +10,7 @@ namespace Mag {
     MAGDATA_t magData;
     uint8_t magReady;
 
-    void Mag_Loop(void *ptr);
+    void loop(void* arg);
 
     void write8(uint8_t data, uint8_t regAddr) {
         I2C_Write8(magAddrW, data, regAddr);
@@ -66,10 +66,10 @@ namespace Mag {
 
         magData = MAGDATA_t{0, 0, 0, 0};
         magReady = 1;
-        xTaskCreate(&Mag_Loop, "DroneLoop", MAG_LOOP_STACK_SIZE, NULL, 4, NULL);
+        xTaskCreate(&loop, "DroneLoop", MAG_LOOP_STACK_SIZE, NULL, 4, NULL);
     }
 
-    void loop(void *ptr) {
+    void loop(void* arg) {
         while (true) {
 //        while((Mag_Read8(MAG_M_DR_STATUS) & (0b111) ) == 0){vTaskDelay(100 / portTICK_PERIOD_MS);} //delay until ready
 //        magReady = 1;

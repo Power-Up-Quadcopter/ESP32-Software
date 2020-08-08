@@ -53,9 +53,19 @@ namespace GPS {
     extern int magVar;         //magnetic variation, fixed point resolution of 0.1
     extern uint8_t magVarDir;  //magnetic variation direction, 0 East, 1 West
 
+    void sendGPS(std::string msg);
+
     extern void init(bool isWarmStart);
 
     extern std::string send(GPS_send_type_t type);
+
+    //exports GPS position telemetry for use in UDP packets
+    //see Communication protocol document in drive
+    std::string posTelemety();
+
+    //exports GPS misc telemetry for use in UDP packets
+    //see Communication protocol document in drive
+    std::string miscTelemety();
 
     extern void task_Allen(void *arg);
 }
