@@ -64,13 +64,13 @@ void app_main() {
 //arduino loop function equivalent
 [[noreturn]] void DroneLoop(void* arg){
 
-
+    unsigned char ping[1] = {0xF0};
     while (1){
 //        printf("Temp: %0.2f\n", spl06.getTemperature());
 //        printf("Pressure: %0.2f\n", spl06.getPressure());
 //        printf("Altitude: %0.2f\n", spl06.getAltitude());
 //        printf("-----------------------\n");
-
+        Wifi::sendTCP((char*) ping, 1);
 
         vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
     }
