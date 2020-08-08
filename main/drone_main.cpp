@@ -18,8 +18,10 @@
 #include "GPIO_Expand.h"
 #include "SD.h"
 #include "Control.h"
+#include "Communication.h"
 
 #define MAIN_LOOP_STACK_SIZE 4096
+#define TAG "Main_Loop"
 
 using namespace std;
 
@@ -70,9 +72,15 @@ void app_main() {
 //        printf("Pressure: %0.2f\n", spl06.getPressure());
 //        printf("Altitude: %0.2f\n", spl06.getAltitude());
 //        printf("-----------------------\n");
+
         Wifi::sendTCP((char*) ping, 1);
 
         vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
+        if(!Talk::receive && Wifi::TCPConnected){
+            ESP_LOGE(TAG, "TIMEOUT");
+            Wifi::TCPConnected = false;
+        }
+        Talk::receive = false;
     }
     vTaskDelete(xTaskGetCurrentTaskHandle());
 }

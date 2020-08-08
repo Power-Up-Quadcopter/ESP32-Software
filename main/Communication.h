@@ -5,6 +5,7 @@
 #include <string>
 
 namespace Talk{
+    extern bool receive;
 
     //takes in char* buffer from TCP/UDP packets and does things
     //puts output bytes in the out parameter

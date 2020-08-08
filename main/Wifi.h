@@ -5,6 +5,8 @@
 
 namespace Wifi{
 
+    extern bool TCPConnected;
+
     void init();
     void sendTCP(char* message, int len, bool isTask=false);
     void sendUDP(char* message, int len, bool isTask=false);

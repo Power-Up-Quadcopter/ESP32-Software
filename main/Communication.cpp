@@ -6,6 +6,8 @@
 #include "Communication.h"
 
 namespace Talk {
+    bool receive;
+
     int parse(const uint8_t *in, uint8_t *out, int len) {
         if (len == 0) { return 0; }
         char temp[len];
@@ -33,10 +35,10 @@ namespace Talk {
                 GPS::sendGPS(std::string(temp));
                 break;
             case 0xF1: //TCP Pong
-                //TODO
+                receive = 1;
                 break;
             case 0xF3: //UDP Pong
-                //TODO
+                receive = 1;
                 break;
         }
         return 0;

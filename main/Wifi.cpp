@@ -48,6 +48,7 @@ namespace Wifi {
     bool TCPConnected = false;
     bool UDPConnected = false;
 
+
     static esp_err_t event_handler(void *ctx, system_event_t *event) {
         switch (event->event_id) {
             case SYSTEM_EVENT_AP_START:
@@ -106,9 +107,10 @@ namespace Wifi {
                 vTaskDelete(xTaskGetCurrentTaskHandle());
                 return;
             }
+            TCPConnected = false;
             while (1) {
                 TCPClientSocket = accept(TCPsocketHandle, (struct sockaddr *) &remote_addr, &socklen);
-                xSemaphoreTake(xMutexT, portMAX_DELAY);
+
                 if (TCPsocketHandle < 0) {
                     ESP_LOGE(TAG, "Unable to accept connection: errno %d", errno);
                     close(TCPClientSocket);
@@ -117,8 +119,10 @@ namespace Wifi {
                 ESP_LOGI(TAG, "New TCP connection request");
                 TCPConnected = true;
                 int len = recv(TCPClientSocket, recv_buf, sizeof(recv_buf) - 1, 0);
+                xSemaphoreTake(xMutexT, portMAX_DELAY);
                 if (len < 0) {
                     ESP_LOGE(TAG, "recv failed: errno %d", errno);
+                    vTaskDelay(2000 / portTICK_PERIOD_MS);
                     close(TCPClientSocket);
                     break;
                 } else {
@@ -127,9 +131,9 @@ namespace Wifi {
 
                         sendTCP(send_buf, len, true);
                     }
-                    xSemaphoreGive(xMutexT);
-                }
 
+                }
+                xSemaphoreGive(xMutexT);
             }
         }
         vTaskDelete(xTaskGetCurrentTaskHandle());
@@ -164,11 +168,12 @@ namespace Wifi {
                 vTaskDelay(4000 / portTICK_PERIOD_MS);
                 break;
             }
-
+            UDPConnected = true;
             while (1) {
                 socklen_t socklenIn = sizeof(source_addr);
                 int len = recvfrom(UDPsocketHandle, recv_buf, sizeof(recv_buf) - 1, 0, (struct sockaddr *) &source_addr,
                                    &socklenIn);
+
                 source_addr.sin_port = 5414;
                 xSemaphoreTake( xMutexU, portMAX_DELAY );
                 if (len < 0) {
