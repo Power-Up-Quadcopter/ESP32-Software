@@ -1,5 +1,6 @@
 
 #include <string>
+#include <soc_log.h>
 #include "Control.h"
 #include "GPS.h"
 #include "Wifi.h"
@@ -36,6 +37,7 @@ namespace Talk {
                 break;
             case 0xF1: //TCP Pong
                 receive = 1;
+                ESP_LOGI("Parse", "recieve");
                 break;
             case 0xF3: //UDP Pong
                 receive = 1;

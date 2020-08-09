@@ -86,7 +86,8 @@ namespace Wifi {
         while(1) {
             TCPsocketHandle = socket(AF_INET, SOCK_STREAM, 0);
             if (TCPsocketHandle < 0) {
-                ESP_LOGE(TAG, "... Failed to allocate socket.\n");
+                ESP_LOGE(TAG, "... Failed to allocate socket. Ernno=%d\n",TCPsocketHandle);
+
                 vTaskDelay(1000 / portTICK_PERIOD_MS);
                 vTaskDelete(xTaskGetCurrentTaskHandle());
                 return;
@@ -113,27 +114,25 @@ namespace Wifi {
 
                 if (TCPsocketHandle < 0) {
                     ESP_LOGE(TAG, "Unable to accept connection: errno %d", errno);
-                    close(TCPClientSocket);
+                    close(TCPsocketHandle);
                     break;
                 }
                 ESP_LOGI(TAG, "New TCP connection request");
                 TCPConnected = true;
-                int len = recv(TCPClientSocket, recv_buf, sizeof(recv_buf) - 1, 0);
-                xSemaphoreTake(xMutexT, portMAX_DELAY);
-                if (len < 0) {
-                    ESP_LOGE(TAG, "recv failed: errno %d", errno);
-                    vTaskDelay(2000 / portTICK_PERIOD_MS);
-                    close(TCPClientSocket);
-                    break;
-                } else {
-                    len = Talk::parse((uint8_t *) recv_buf, (uint8_t *) send_buf, len);
-                    if (len > 0) {
-
-                        sendTCP(send_buf, len, true);
+                while (int len = recv(TCPClientSocket, recv_buf, sizeof(recv_buf) - 1, 0)) {
+                    if (len < 0) {
+                        ESP_LOGE(TAG, "recv failed: errno %d", errno);
+                        vTaskDelay(2000 / portTICK_PERIOD_MS);
+                        close(TCPClientSocket);
+                        break;
+                    } else {
+                        len = Talk::parse((uint8_t *) recv_buf, (uint8_t *) send_buf, len);
+                        if (len > 0) {
+                            sendTCP(send_buf, len, false);
+                        }
                     }
-
                 }
-                xSemaphoreGive(xMutexT);
+                TCPConnected = false;
             }
         }
         vTaskDelete(xTaskGetCurrentTaskHandle());
@@ -228,8 +227,8 @@ namespace Wifi {
         // assign a static IP to the network interface
         tcpip_adapter_ip_info_t info;
         memset(&info, 0, sizeof(info));
-        IP4_ADDR(&info.ip, 192, 168, 1, 1);
-        IP4_ADDR(&info.gw, 192, 168, 1, 1);//ESP acts as router, so gw addr will be its own addr
+        IP4_ADDR(&info.ip, 10, 10, 10, 10);
+        IP4_ADDR(&info.gw, 10, 10, 10, 10);//ESP acts as router, so gw addr will be its own addr
         IP4_ADDR(&info.netmask, 255, 255, 255, 0);
         ESP_ERROR_CHECK(tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_AP, &info));
         // start the DHCP server

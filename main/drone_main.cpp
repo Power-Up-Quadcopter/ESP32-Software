@@ -65,7 +65,7 @@ void app_main() {
 
 //arduino loop function equivalent
 [[noreturn]] void DroneLoop(void* arg){
-
+    int connected = 3;
     unsigned char ping[1] = {0xF0};
     while (1){
 //        printf("Temp: %0.2f\n", spl06.getTemperature());
@@ -75,12 +75,20 @@ void app_main() {
 
         Wifi::sendTCP((char*) ping, 1);
 
-        vTaskDelay(1000 / portTICK_PERIOD_MS); //delay 1000ms
+        vTaskDelay( 1000 / portTICK_PERIOD_MS); //delay 1000ms
         if(!Talk::receive && Wifi::TCPConnected){
-            ESP_LOGE(TAG, "TIMEOUT");
-            Wifi::TCPConnected = false;
+            connected--;
+            if(connected==0){
+                ESP_LOGW(TAG, "TIMEOUT");
+                Wifi::TCPConnected = false;
+            }
+
         }
-        Talk::receive = false;
+        else{
+            connected = 3;
+            Talk::receive = false;
+        }
+
     }
     vTaskDelete(xTaskGetCurrentTaskHandle());
 }
