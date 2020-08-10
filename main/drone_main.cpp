@@ -57,10 +57,11 @@ void app_main() {
 //    spl06.initialize();
 //    Esc::init();
 //    GPS::init(true);
-//    Mag::init();
+    Mag::init();
 
     //create the DroneLoop task
     xTaskCreate(&DroneLoop, "DroneLoop", MAIN_LOOP_STACK_SIZE, NULL, 4, NULL);
+    xTaskCreate(&MPU::task_display, "MPUTask", MAIN_LOOP_STACK_SIZE, NULL, 4, NULL);
 }
 
 //arduino loop function equivalent
@@ -79,7 +80,7 @@ void app_main() {
         if(!Talk::receive && Wifi::TCPConnected){
             connected--;
             if(connected==0){
-                ESP_LOGW(TAG, "TIMEOUT");
+//                ESP_LOGW(TAG, "TIMEOUT");
                 Wifi::TCPConnected = false;
             }
 

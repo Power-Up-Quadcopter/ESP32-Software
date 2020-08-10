@@ -37,7 +37,7 @@ namespace Talk {
                 break;
             case 0xF1: //TCP Pong
                 receive = 1;
-                ESP_LOGI("Parse", "recieve");
+//                ESP_LOGI("Parse", "recieve");
                 break;
             case 0xF3: //UDP Pong
                 receive = 1;

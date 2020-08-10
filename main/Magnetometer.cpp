@@ -1,16 +1,24 @@
 
 #include <stdint.h>
+#include <cmath>
 #include "I2C_General.h"
 #include "Magnetometer.h"
 
 #define magAddrW 0x1E
 #define MAG_LOOP_STACK_SIZE 2048
 
+#define offsetX 494.5
+#define offsetY 937.5
+#define offsetZ 508.5
+
+#define scaleX 1.0845315904139432
+#define scaleY 0.9374764595103577
+#define scaleZ 0.988875645609853
+
 namespace Mag {
-    MAGDATA_t magData;
     uint8_t magReady;
 
-    void loop(void* arg);
+    [[noreturn]] void loop(void* arg);
 
     void write8(uint8_t data, uint8_t regAddr) {
         I2C_Write8(magAddrW, data, regAddr);
@@ -28,6 +36,15 @@ namespace Mag {
     uint16_t read16(uint8_t regAddr) {
         uint16_t out = I2C_Read16(magAddrW, regAddr);
         return out;
+    }
+
+    MagData* getData(){
+        auto* data = new MagData;
+        data->x = (read16(MAG_OUT_X) - offsetX ) * scaleX;
+        data->y = (read16(MAG_OUT_Y) - offsetY ) * scaleY;
+        data->z = (read16(MAG_OUT_Z) - offsetZ ) * scaleZ;
+        data->temp = read8(MAG_TEMP);
+        return data;
     }
 
     void init() {
@@ -64,25 +81,23 @@ namespace Mag {
         //active=1 take part out of standby
         write8(0b00101101, MAG_CTRL_REG1);
 
-        magData = MAGDATA_t{0, 0, 0, 0};
         magReady = 1;
         xTaskCreate(&loop, "DroneLoop", MAG_LOOP_STACK_SIZE, NULL, 4, NULL);
     }
 
-    void loop(void* arg) {
+    [[noreturn]] void loop(void* arg) {
         while (true) {
 //        while((Mag_Read8(MAG_M_DR_STATUS) & (0b111) ) == 0){vTaskDelay(100 / portTICK_PERIOD_MS);} //delay until ready
 //        magReady = 1;
-            magData.x = read16(MAG_OUT_X);
-            magData.y = read16(MAG_OUT_Y);
-            magData.z = read16(MAG_OUT_Z);
-            magData.temp = read8(MAG_TEMP);
+            MagData* data = getData();
 
-            printf("X: %d\n", magData.x);
-            printf("Y: %d\n", magData.y);
-            printf("Z: %d\n", magData.z);
-            printf("Temp: %d\n", magData.temp);
             printf("-----\n");
+            printf("X: %d\n", data->x);
+            printf("Y: %d\n", data->y);
+            printf("Z: %d\n", data->z);
+            printf("Heading: %f\n", atan2(data->y, data->x));
+//            printf("Temp: %d\n", data->temp);
+
 
             vTaskDelay(100 / portTICK_PERIOD_MS);
         }
