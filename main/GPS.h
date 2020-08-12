@@ -35,39 +35,64 @@ typedef enum {
 } GPS_globals_ind;
 
 namespace GPS {
-    extern int timeStamp;     //UTC timestamp in seconds
-    extern uint8_t status;     //1 valid, 0 warning
-    extern uint8_t NS;         //0 North, 1 South
-    extern int latDegrees;
-    extern int latMinutes;
-    extern int latPartMins;    //fixed point resolution of .00001
-    extern uint8_t EW;         //0 East, 1 West
-    extern int longDegrees;
-    extern int longMinutes;
-    extern int longPartMins;   //fixed point resolution of .00001
-    extern int speed;          //speed in knots, fixed point resolution of 0.1
-    extern int courseMadeGood; //direction of actual travel, NOT heading, fixed point resolution of 0.1
-    extern uint8_t day;
-    extern uint8_t month;
-    extern int year;
-    extern int magVar;         //magnetic variation, fixed point resolution of 0.1
-    extern uint8_t magVarDir;  //magnetic variation direction, 0 East, 1 West
 
-    void sendGPS(std::string msg);
+    //Lots of globals
+    extern int timeStamp;      /*!< < UTC timestamp in seconds. */
+    extern uint8_t status;     /*!< 1 for valid read, 0 for warning */
+    extern uint8_t NS;         /*!< 0 North, 1 South */
+    extern int latDegrees;      /*!< Degrees latitude */
+    extern int latMinutes;      /*!< Minutes latitude */
+    extern int latPartMins;    /*!< Decimal minutes latitude, fixed point resolution of .00001 */
+    extern uint8_t EW;         /*!< 0 East, 1 West */
+    extern int longDegrees;     /*!< Degrees longitude */
+    extern int longMinutes;     /*!< Minutes longitude */
+    extern int longPartMins;   /*!< Decimal minutes longitude, fixed point resolution of .00001 */
+    extern int speed;          /*!< Speed in knots, fixed point resolution of 0.1 */
+    extern int courseMadeGood; /*!< Direction of actual travel, NOT heading, fixed point resolution of 0.1 */
+    extern uint8_t day;     /*!< Current day */
+    extern uint8_t month;  /*!< Current month */
+    extern int year;       /*!< Current year */
+    extern int magVar;         /*!< Magnetic variation, fixed point resolution of 0.1 */
+    extern uint8_t magVarDir;  /*!< Magnetic variation direction, 0 East, 1 West */
 
+    /** Component initialization function. Call before using this component.
+     *
+    *  @param isWarmStart True if the GPS should use a warm start, false for a cold start.
+    */
     extern void init(bool isWarmStart);
 
+    /** Send a command over UART to the GPS.
+     *
+     * @param msg GPS command without the $, *, or checksum
+     */
+    void sendGPS(std::string msg);
+
+    /** Get a string representing the various debug globals
+     *
+    *  @param What category of data the function should return
+     *
+     *
+     *  @return A string containing various GPS globals
+    */
     extern std::string send(GPS_send_type_t type);
 
-    //exports GPS position telemetry for use in UDP packets
-    //see Communication protocol document in drive
+
+    /** Exports GPS position telemetry for use in UDP packets.
+     *
+     * @Note See the communication protocol document in drive for info on the packet format.
+     *
+     * @return String containing packet data to send over UDP.
+     */
     std::string posTelemety();
 
-    //exports GPS misc telemetry for use in UDP packets
-    //see Communication protocol document in drive
+    /** Exports GPS misc telemetry for use in UDP packets.
+     *
+     * @Note See the communication protocol document in drive for info on the packet format.
+     *
+     * @return String containing packet data to send over UDP.
+     */
     std::string miscTelemety();
 
-    extern void task_Allen(void *arg);
 }
 
 #endif //ESP32_SOFTWARE_GPS_H

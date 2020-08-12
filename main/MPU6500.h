@@ -28,21 +28,42 @@
 
 namespace MPU{
 
+    /** Task that gets called by app_main to initialize component.
+     *
+     * @param p Unused, set to NULL
+     */
     [[noreturn]] void task_display(void* p);
 
-    //write an 8bit value to specific register
-    void MPU_Write8(uint8_t data, uint8_t regAddr);
+    /** Component specific I2C function for reading 8 bit registers.
+     *
+     * @param data The 8 bit data value to write
+     * @param regAddr The address of the 8 bit register you want to access
+    */
+    void write8(uint8_t data, uint8_t regAddr);
 
-    //write a 16 bit value to two sequential registers
-    //takes the high bit register b/c mpu auto increments register after r/w
-    void MPU_Write16(uint16_t data, uint8_t regAddr);
+    /** Component specific I2C function for writing to 16 bit registers.
+     *
+     * @param data The 16 bit data value to write
+     * @param regAddr The address of the 16 bit register you want to access
+     *
+    */
+    void write16(uint16_t data, uint8_t regAddr);
 
-    //read an 8bit value from specific register
-    uint8_t MPU_Read8(uint8_t regAddr);
+    /** Component specific I2C function for reading 8 bit registers.
+     *
+     * @param regAddr The address of the 8 bit register you want to access
+     *
+     * @return The 8 bit value contained within the register.
+    */
+    uint8_t read8(uint8_t regAddr);
 
-    //read a 16 bit value from two sequential registers
-    //takes the high bit register b/c mpu auto increments register after r/w
-    uint16_t MPU_Read16(uint8_t regAddr);
+    /** Component specific I2C function for reading 16 bit registers.
+     *
+     * @param regAddr The address of the 16 bit register you want to access
+     *
+     * @return The 16 bit value contained within the register.
+    */
+    uint16_t read16(uint8_t regAddr);
 }
 
 #endif //ESP32_SOFTWARE_MPU6500_H

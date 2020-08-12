@@ -28,23 +28,23 @@ namespace GPS {
     bool GPSready = false; //true if we have sight of at least 1 satellite
 
     int times = 0;
-    int timeStamp = 0;      //UTC timestamp in seconds
-    uint8_t status = 1;     //1 valid, 0 warning
-    uint8_t NS = 0;         //0 North, 1 South
+    int timeStamp = 0;
+    uint8_t status = 1;
+    uint8_t NS = 0;
     int latDegrees = 0;
     int latMinutes = 0;
-    int latPartMins = 0;    //fixed point resolution of .00001
-    uint8_t EW = 0;         //0 East, 1 West
+    int latPartMins = 0;
+    uint8_t EW = 0;
     int longDegrees = 0;
     int longMinutes = 0;
-    int longPartMins = 0;   //fixed point resolution of .00001
-    int speed = 0;          //speed in knots, fixed point resolution of 0.1
-    int courseMadeGood = 0; //direction of actual travel, NOT heading, fixed point resolution of 0.1
+    int longPartMins = 0;
+    int speed = 0;
+    int courseMadeGood = 0;
     uint8_t day = 1;
     uint8_t month = 1;
     int year = 2020;
-    int magVar = 0;         //magnetic variation, fixed point resolution of 0.1
-    uint8_t magVarDir = 0;  //magnetic variation direction, 0 East, 1 West
+    int magVar = 0;
+    uint8_t magVarDir = 0;
     uint8_t totSats;
     string infoStr[17]; //array of string ptrs corresponding with info globals above, in the same order as the globals
 

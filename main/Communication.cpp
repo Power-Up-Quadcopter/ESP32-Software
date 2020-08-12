@@ -33,7 +33,11 @@ namespace Talk {
 
                 break;
             case 0xD0: //Debug variables
+
                 GPS::sendGPS(std::string(temp));
+                break;
+            case 0xD1: //Debug thingy
+
                 break;
             case 0xF1: //TCP Pong
                 receive = 1;
@@ -71,5 +75,6 @@ namespace Talk {
 
         Wifi::sendUDP(out,msg.length()+1);
     }
+
 
 }

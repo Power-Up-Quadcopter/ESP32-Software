@@ -19,23 +19,66 @@
 #define I2Cport I2C_NUM_0
 #define GPIOport I2C_NUM_1
 
+
+
+
+//  NOTE: dont use these functions outside of drivers, use driver specific functions
+
+
+/** I2C initialization function. Call this before using any I2C devices.
+ *
+ * @return Error code returned by the driver initialization
+*/
 esp_err_t I2C_Init();
 
-//  ---dont use these functions outside of drivers, use driver specific functions---
 
+
+/** Test function for higher i2c frequency writing.
+ *
+ * @param regAddr The address of the 8 bit register you want to access
+*/
 void I2C_Write8_fast(uint8_t addrW, uint8_t data, uint8_t regAddr);
-//write an 8bit value to specific register
+
+/** Generic i2c function for writing to 8 bit registers.
+ *
+ * @param addrW The I2C address of the device being accessed
+ * @param data 8 bit data value to write
+ * @param regAddr The address of the 8 bit register you want to access
+*/
 void I2C_Write8(uint8_t addrW, uint8_t data, uint8_t regAddr);
 
-//write a 16 bit value to two sequential registers
-//takes the high bit register b/c mpu auto increments register after r/w
+/** Arduino specific i2c function for sending several 8 bit values.
+ *
+ * @param addrW The I2C address of the Arduino being accessed
+ * @param data A pointer to array of 8 bit numbers
+ * @param dataLen The length of the data array
+*/
+void I2C_Write8_Nano(uint8_t addrW, uint8_t* data, uint8_t dataLen);
+
+/** Generic I2C function for writing to 16 bit registers.
+ *
+ * @param addrW The I2C address of the device being accessed
+ * @param data 16 bit data value to write
+ * @param regAddr The address of the 16 bit register you want to access
+*/
 void I2C_Write16(uint8_t addrW, uint16_t data, uint8_t regAddr);
 
-//read an 8bit value from specific register
+/** Generic I2C function for reading 8 bit registers.
+ *
+ * @param addrW The I2C address of the device being accessed
+ * @param regAddr The address of the 8 bit register you want to access
+ *
+ * @return The 8 bit value contained within the register.
+*/
 uint8_t I2C_Read8(uint8_t addrW, uint8_t regAddr);
 
-//read a 16 bit value from two sequential registers
-//takes the high bit register b/c mpu auto increments register after r/w
+/** Generic I2C function for reading 16 bit registers.
+ *
+ * @param addrW The I2C address of the device being accessed
+ * @param regAddr The address of the 16 bit register you want to access
+ *
+ * @return The 16 bit value contained within the register.
+*/
 uint16_t I2C_Read16(uint8_t addrW, uint8_t regAddr);
 
 #endif //ESP32_SOFTWARE_I2C_GENERAL_H

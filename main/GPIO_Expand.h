@@ -2,6 +2,7 @@
 #ifndef ESP32_SOFTWARE_GPIO_EXPAND_H
 #define ESP32_SOFTWARE_GPIO_EXPAND_H
 
+
 typedef enum{
     GPA0 = 0,
     GPA1 = 1,
@@ -32,38 +33,74 @@ namespace Expand{
     #define GPIOA 0x12
     #define GPIOB 0x13
 
-    extern uint8_t portA;
-    extern uint8_t portB;
+
+    extern uint8_t portA; /*!< Current levels off all portA pins */
+    extern uint8_t portB; /*!< Current levels off all portB pins */
 
 
 
-    //Initialize all to output, PUR off, level low
+    /** Component initialization function. Call before using this component.
+    */
     void init();
 
-    //write an 8bit value to specific register
+    /** Component specific I2C function for reading 8 bit registers.
+     *
+     * @param data The 8 bit data value to write
+     * @param regAddr The address of the 8 bit register you want to access
+    */
     void write8(uint8_t data, uint8_t regAddr);
 
-    //write a 16 bit value to two sequential registers
-    //takes the high bit register b/c mpu auto increments register after r/w
+    /** Component specific I2C function for writing to 16 bit registers.
+     *
+     * @param data The 16 bit data value to write
+     * @param regAddr The address of the 16 bit register you want to access
+     *
+    */
     void write16(uint16_t data, uint8_t regAddr);
 
-    //read an 8bit value from specific register
+    /** Component specific I2C function for reading 8 bit registers.
+     *
+     * @param regAddr The address of the 8 bit register you want to access
+     *
+     * @return The 8 bit value contained within the register.
+    */
     uint8_t read8(uint8_t regAddr);
 
-    //read a 16 bit value from two sequential registers
-    //takes the high bit register b/c mpu auto increments register after r/w
+    /** Component specific I2C function for reading 16 bit registers.
+     *
+     * @param regAddr The address of the 16 bit register you want to access
+     *
+     * @return The 16 bit value contained within the register.
+    */
     uint16_t read16(uint8_t regAddr);
 
-    //set a single pin's direction
+
+    /** Set the direction of a single pin.
+     *
+     * @param pin The pin you want to change
+     * @param dir Pin direction, 0 for output, 1 for input
+    */
     void setPinDir(pin_t pin, bool dir);
 
-    //set a single pin to high or low
+    /** Set a single output pin to high or low.
+     *
+     * @param pin The pin you want to change
+     * @param on Pin level, 0 for low, 1 for high
+    */
     void setPinData(pin_t pin, bool on);
 
-    //set all pins' directions
+    /** Set the direction of a all pins.
+     *
+     * @param newPortA The direction of all port A pins.
+     * @param newPortB The direction of all port B pins.
+    */
     void setAllDir(uint8_t newPortA, uint8_t newPortB);
 
-    //set all pins' level
+    /** Set the output level of all pins
+     *
+     * @param newPortA The levels of all port A pins.
+     * @param newPortB The levels of all port B pins.
+    */
     void setAllData(uint8_t newPortA, uint8_t newPortB);
 
 }

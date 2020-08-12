@@ -12,8 +12,11 @@
 #define MOUNT_POINT "/sdcard"
 
 namespace SD{
-    void init();
 
+    /** Component initialization function. Call before using this component.
+     *  @note Calling this function may break debug mode.
+    */
+    void init();
 
 }
 

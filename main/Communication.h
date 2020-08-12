@@ -5,19 +5,33 @@
 #include <string>
 
 namespace Talk{
-    extern bool receive;
 
-    //takes in char* buffer from TCP/UDP packets and does things
-    //puts output bytes in the out parameter
-    //returns len of output bytes,
-    //if len==0 dont send anything
-    //if len==-1 command unrecognized
+    extern bool receive; /*!< Global to keep track of the timeout state. */
+
+    /** Parse function for TCP/UDP packets.
+     *
+     *  @param in Pointer to array containing packet data
+     *  @param len Length of the packet data
+     *  @param out Packet to send back to sender if there is one.
+     *
+     *  @return
+     *      <0 for error codes,
+     *      0 for no output,
+     *      >0 for output length
+    */
     int parse(const uint8_t* in, uint8_t* out, int len);
 
-    //send error msg over tcp
+
+    /** Send an error msg over TCP. High priority.
+     *
+     * @param msg Message to be sent
+     */
     void sendError(std::string msg);
 
-    //send a non-critical msg over UDP
+    /** Send a debug message over UDP.
+     *
+     * @param msg Message to be sent
+     */
     void sendNorm(std::string msg);
 }
 

@@ -55,13 +55,13 @@ void app_main() {
 
 //    SD::init();
 //    spl06.initialize();
-//    Esc::init();
+    Esc::init();
 //    GPS::init(true);
-    Mag::init();
+//    Mag::init();
 
     //create the DroneLoop task
     xTaskCreate(&DroneLoop, "DroneLoop", MAIN_LOOP_STACK_SIZE, NULL, 4, NULL);
-    xTaskCreate(&MPU::task_display, "MPUTask", MAIN_LOOP_STACK_SIZE, NULL, 4, NULL);
+//    xTaskCreate(&MPU::task_display, "MPUTask", MAIN_LOOP_STACK_SIZE, NULL, 4, NULL);
 }
 
 //arduino loop function equivalent
@@ -91,5 +91,5 @@ void app_main() {
         }
 
     }
-    vTaskDelete(xTaskGetCurrentTaskHandle());
+    vTaskDelete(NULL);
 }

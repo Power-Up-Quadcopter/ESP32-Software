@@ -68,6 +68,23 @@ void I2C_Write8(uint8_t addrW, uint8_t data, uint8_t regAddr){
 }
 
 
+void I2C_Write8_Nano(uint8_t addrW, uint8_t* data, uint8_t dataLen){
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, addrW << 1 | WRITE_BIT, ACK_CHECK_EN);
+    for(int i=0; i<dataLen; i++){
+        i2c_master_write_byte(cmd, data[i], ACK_CHECK_EN);
+    }
+    i2c_master_stop(cmd);
+
+    esp_err_t ret = i2c_master_cmd_begin(i2c_port, cmd, 50 / portTICK_RATE_MS);
+    i2c_cmd_link_delete(cmd);
+
+    if(ret != 0) printf("I2C error: %s\n", esp_err_to_name(ret));
+
+}
+
+
 void I2C_Write16(uint8_t addrW, uint16_t data, uint8_t regAddr){
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     uint8_t toSend[4] = {addrW, regAddr, *(((uint8_t*) &data)+1), *(((uint8_t*) &data))};

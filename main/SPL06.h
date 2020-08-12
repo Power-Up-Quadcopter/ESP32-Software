@@ -49,16 +49,16 @@ protected:
     double get_trawsc();
 
 public:
-    //  configures SPL06
+    ///  Configures SPL06.
     void initialize();
 
-    //  gets temperature in celsius
+    ///  Gets temperature in celsius.
     double getTemperature();
 
-    //  gets pressure in pascals
+    ///  Gets pressure in pascals.
     double getPressure();
 
-    //  gets altitude in meters
+    ///  Gets altitude in meters.
     double getAltitude();
 };
 
