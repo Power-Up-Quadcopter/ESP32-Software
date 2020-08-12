@@ -70,7 +70,7 @@ namespace Mag{
      *
      * @return MagData A struct containing x,y,z field strengths and temperature reading
     */
-    MagData* getData()
+    MagData* getData();
 
 }
 
