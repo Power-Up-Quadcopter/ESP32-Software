@@ -2,6 +2,8 @@
 #ifndef ESP32_SOFTWARE_MPU6500_H
 #define ESP32_SOFTWARE_MPU6500_H
 
+#define GYRO_CALIBRATION false
+
 #define SELF_TEST_X_GYRO 0x00
 #define SELF_TEST_Y_GYRO 0x01
 #define SELF_TEST_Z_GYRO 0x02
@@ -28,11 +30,25 @@
 
 namespace MPU{
 
+    extern float ypr[];
+    extern uint32_t accelXYZ[];
+    extern short raw[4];
+
+    extern float last20Yaw[20];
+    extern float last20Pitch[20];
+    extern float last20Roll[20];
+    extern float last20AccelZ[20];
     /** Task that gets called by app_main to initialize component.
      *
      * @param p Unused, set to NULL
      */
     [[noreturn]] void task_display(void* p);
+
+    /**Sends new gyro offsets to the MPU6500 for calibration purposes.
+     *
+     * @param haha An array of 4 bytes representing the new offsets to be sent
+     */
+    void debuggy(const int8_t* haha);
 
     /** Component specific I2C function for reading 8 bit registers.
      *
@@ -64,6 +80,45 @@ namespace MPU{
      * @return The 16 bit value contained within the register.
     */
     uint16_t read16(uint8_t regAddr);
+
+
+
+//    ///Functions to get the integral and derivative of recent MPU values
+//    float getIntegralYaw();
+//    float getIntegralPitch();
+//    float getIntegralRoll();
+//    float getIntegralAccel();
+//    float getDerivativeYaw();
+//    float getDerivativePitch();
+//    float getDerivativeRoll();
+//    float getDerivativeAccel();
+
+
+#if GYRO_CALIBRATION
+    /** Calculates the average of the last NUM_AVG X gyro values.
+     *
+     * @return The average calculated
+     */
+    float getAvgX();
+
+    /** Calculates the average of the last NUM_AVG Y gyro values.
+     *
+     * @return The average calculated
+     */
+    float getAvgY();
+
+    /** Calculates the average of the last NUM_AVG Z gyro values.
+     *
+     * @return The average calculated
+     */
+    float getAvgZ();
+
+    /** Calculates the average of the last NUM_AVG Z acceleration values.
+     *
+     * @return The average calculated
+     */
+    float getAvgA();
+#endif
 }
 
 #endif //ESP32_SOFTWARE_MPU6500_H
