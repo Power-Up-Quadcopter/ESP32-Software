@@ -10,6 +10,9 @@
 #define ESC2_PIN 25
 #define ESC3_PIN 26
 
+#define THROTTLE_MIN 13
+
+
 typedef enum{
     FrontR = 0,
     FrontL = 1,
@@ -33,6 +36,14 @@ namespace Esc {
     */
     void setAll(const uint8_t* newPowers);
 
+    /** Magic function that takes in desired movement values and sets the motor powers
+     *
+     * @param toYaw
+     * @param toPitch
+     * @param toRoll
+     * @param throttle
+     */
+    void motorPID(float toYaw, float toPitch, float toRoll, float throttle);
 
     /** Sets up PWM output to corresponding ESC
      *  @param esc ESC to modify
