@@ -1,14 +1,31 @@
 
+#include <sstream>
+#include <string>
+#include <cstring>
 #include <driver/uart.h>
 #include <esp_log.h>
-#include "GPS.h"
-#include <sstream>
-#include <string.h>
+#include <vector>
+#include "freertos/FreeRTOS.h"
+#include "nvs_flash.h"
+#include "nvs.h"
+#include "esp_system.h"
 #include "Wifi.h"
+#include "GPS.h"
 
 #define GPS_LOOP_STACK_SIZE 4096
 #define GPSRX 33
 #define GPSTX 32
+
+
+
+
+//lengths in bytes of the warm start variables
+//including null terminator
+#define WARM_LAT 11
+#define WARM_LONG 12
+#define WARM_ALT 5
+#define WARM_DATE 10
+#define WARM_TIME 9
 
 using namespace std;
 
@@ -18,12 +35,17 @@ namespace GPS {
     SemaphoreHandle_t xMutex;
 //see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/uart.html
 
-    const string warmStart_lat = "2964.010,N";
-    const string warmStart_lon = "09867.648,W";
-    const string warmStart_alt = "0375";
-    const string warmStart_date = "7,08,2020";
-    const string warmStart_time = "19,08,00";
+    string warmStart_lat = "2964.010,N";
+    string warmStart_lon = "09867.648,W";
+    string warmStart_alt = "0375";
+    string warmStart_date = "7,08,2020";
+    string warmStart_time = "19,08,00";
 
+#if DEFAULT_DATA
+    bool prevSave = false;
+#else
+    bool prevSave = true;
+#endif
 
     bool GPSready = false; //true if we have sight of at least 1 satellite
 
@@ -48,9 +70,109 @@ namespace GPS {
     uint8_t totSats;
     string infoStr[17]; //array of string ptrs corresponding with info globals above, in the same order as the globals
 
+    nvs_handle_t gps_handle;
+
     void GPS_Loop(void *ptr);
 
     void task_Alec(void *ptr);
+
+
+    /**Save GPS fix data to non-volatile storage for use later.
+     *
+     * @return Esp Idf error code
+     */
+    esp_err_t saveData(){
+        printf("Saving to Non-Volatile Storage (NVS) handle... ");
+
+        if(!prevSave){
+            string NS_ = NS ? "N" : "S";
+            string EW_ = EW ? "E" : "W";
+            string latPartStr = (latPartMins>99) ? to_string(latPartMins) : "0" + to_string(latPartMins);
+            string longPartStr = (longPartMins>99) ? to_string(longPartMins) : "0" + to_string(longPartMins);
+            string longDegStr = (longDegrees>99) ? to_string(longDegrees) : "0" + to_string(longDegrees);
+            string monthStr = (month>9) ? to_string(month) : "0" + to_string(month);
+
+
+            warmStart_lat = string(to_string(latDegrees) + to_string(latMinutes) + "." + latPartStr);
+            warmStart_lon = string(longDegStr + to_string(longMinutes) + "." + longPartStr);
+            warmStart_date = string(to_string(day) + "," + monthStr + ","  + to_string(year));
+            warmStart_time = string(to_string(timeStamp));
+
+            prevSave = true;
+        }
+
+        esp_err_t err = nvs_open("GPS", NVS_READWRITE, &gps_handle);
+        if (err != ESP_OK) {
+            printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
+        }
+
+        int current = 0;
+        int size = WARM_LAT + WARM_LONG + WARM_ALT + WARM_DATE + WARM_TIME;
+        char* out = new char[size];
+        for(char const &a : warmStart_lat){
+            out[current++] = a;
+        }
+        out[current++] = 0;
+        for(char const &a : warmStart_lon){
+            out[current++] = a;
+        }
+        out[current++] = 0;
+        for(char const &a : warmStart_alt){
+            out[current++] = a;
+        }
+        out[current++] = 0;
+        for(char const &a : warmStart_date){
+            out[current++] = a;
+        }
+        out[current++] = 0;
+        for(char const &a : warmStart_time){
+            out[current++] = a;
+        }
+        out[current++] = 0;
+
+        err = nvs_set_blob(gps_handle, "GPS_INFO", out, size);
+        if (err != ESP_OK) return err;
+
+        err = nvs_commit(gps_handle);
+        if (err != ESP_OK) return err;
+
+        nvs_close(gps_handle);
+        return ESP_OK;
+
+    }
+
+    /**Get GPS fix data from last time and update the globals.
+     *
+     * @return Esp Idf error code
+     */
+    esp_err_t  getSaveData(){
+        printf("Reading from Non-Volatile Storage (NVS) handle... ");
+
+        esp_err_t err = nvs_open("GPS", NVS_READWRITE, &gps_handle);
+        if (err != ESP_OK) {
+            printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
+        }
+
+        int out_size = 0;
+        char* GPS_str = nullptr;
+        err = nvs_get_blob(gps_handle, "GPS_INFO", GPS_str, (size_t*) &out_size);
+        if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+        else if(err == ESP_ERR_NVS_NOT_FOUND){return ESP_OK;}
+
+        int inc = 0;
+        warmStart_lat = string(GPS_str);
+        inc += WARM_LAT;
+        warmStart_lon = string(GPS_str + inc);
+        inc += WARM_LONG;
+        warmStart_alt = string(GPS_str + inc);
+        inc += WARM_ALT;
+        warmStart_date = string(GPS_str + inc);
+        inc += WARM_DATE;
+        warmStart_time = string(GPS_str + inc);
+
+        nvs_close(gps_handle);
+        return ESP_OK;
+    }
 
     void sendGPS(string msg) {
         uint8_t checksum = msg.c_str()[0];
@@ -136,6 +258,17 @@ namespace GPS {
         // Install UART driver using an event queue here
         ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, uart_buffer_size, \
                                         uart_buffer_size, 10, &uart_queue, 0));
+
+
+
+        esp_err_t err;
+#if DEFAULT_DATA
+        err = getSaveData();
+        if(err != ESP_OK){ ESP_LOGE("GPS", "Error writing GPS data: %s", esp_err_to_name(err));}
+#endif
+
+        err = getSaveData();
+        if(err != ESP_OK){ ESP_LOGE("GPS", "Error reading GPS data: %s", esp_err_to_name(err));}
 
         xMutex = xSemaphoreCreateMutex();
 //    GPS_configMessages();
@@ -362,6 +495,7 @@ namespace GPS {
             ESP_LOGW("GPS", "%s\n",cmd);
             if(args[4][0]!=0){
                 totSats = atoi(args[4]);
+
                 GPSready = true;
             }
         } else if (strcmp(args[0], "$GPGLL") == 0) { //	Position data: position fix, time of position fix, and status

@@ -4,6 +4,9 @@
 
 #include <string>
 
+//true if you dont have warm start values saved in your esp32
+#define DEFAULT_DATA true
+
 #define GPSTASK &task_Alec
 //#define GPSTASK &task_Allen
 
