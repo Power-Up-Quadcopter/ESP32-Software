@@ -15,6 +15,33 @@
 #define scaleY 0.9374764595103577
 #define scaleZ 0.988875645609853
 
+//#define offsetX 49.19
+//#define offsetY 98.04
+//#define offsetZ 55.14
+//
+//#define C1 0.982
+//#define C2 -0.062
+//#define C3 -0.004
+//#define C4 -0.062
+//#define C5 1.009
+//#define C6 0.009
+//#define C7 -0.004
+//#define C8 0.009
+//#define C9 1.014
+
+
+//#define scaleX 1
+//#define scaleY 1
+//#define scaleZ 1
+
+//#define offsetX 0
+//#define offsetY 0
+//#define offsetZ 0
+//
+//#define scaleX 1
+//#define scaleY 1
+//#define scaleZ 1
+
 namespace Mag {
     uint8_t magReady;
 
@@ -40,11 +67,19 @@ namespace Mag {
 
     MagData* getData(){
         auto* data = new MagData;
-        data->x = (read16(MAG_OUT_X) - offsetX ) * scaleX;
-        data->y = (read16(MAG_OUT_Y) - offsetY ) * scaleY;
-        data->z = (read16(MAG_OUT_Z) - offsetZ ) * scaleZ;
+        float tempX = read16(MAG_OUT_X) - offsetX;
+        float tempY = read16(MAG_OUT_Y) - offsetY;
+        float tempZ = read16(MAG_OUT_Z) - offsetZ;
+        data->x = tempX * scaleX;
+        data->y = tempY * scaleY;
+        data->z = tempZ * scaleZ;
         data->temp = read8(MAG_TEMP);
         return data;
+    }
+
+
+    int getHeading(float yaw, float pitch, float roll, MagData* data){
+        return data->x;
     }
 
     void init() {
@@ -89,13 +124,13 @@ namespace Mag {
         while (true) {
 //        while((Mag_Read8(MAG_M_DR_STATUS) & (0b111) ) == 0){vTaskDelay(100 / portTICK_PERIOD_MS);} //delay until ready
 //        magReady = 1;
-            MagData* data = getData();
-
-            printf("-----\n");
-            printf("X: %d\n", data->x);
-            printf("Y: %d\n", data->y);
-            printf("Z: %d\n", data->z);
-            printf("Heading: %f\n", atan2(data->y, data->x));
+//            MagData* data = getData();
+//
+//            printf("-----\n");
+//            printf("X: %d\n", data->x);
+//            printf("Y: %d\n", data->y);
+//            printf("Z: %d\n", data->z);
+//            printf("Heading: %f\n", atan2(data->y, data->x));
 //            printf("Temp: %d\n", data->temp);
 
 
