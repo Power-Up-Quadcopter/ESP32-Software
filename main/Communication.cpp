@@ -4,10 +4,16 @@
 #include "Control.h"
 #include "GPS.h"
 #include "Wifi.h"
+#include "ESC_Control.h"
+#include "MPU6500.h"
 #include "Communication.h"
+
 
 namespace Talk {
     bool receive;
+
+    uint8_t allOff[] = {0,0,0,0};
+    uint8_t allOn[] = {255,255,255,255};
 
     int parse(const uint8_t *in, uint8_t *out, int len) {
         if (len == 0) { return 0; }
@@ -18,7 +24,7 @@ namespace Talk {
         temp[len-1] = 0;
         switch (in[0]) {
             case 0x01: //Joystick Axes
-                Control::updateAxes(in+1);
+                Control::updateAxes((int8_t*) (in+1));
                 return 0;
             case 0x02: //Joystick Buttons
                 Control::updateButtons(in+1);
@@ -30,14 +36,29 @@ namespace Talk {
                 Control::updateStatus(0);
                 break;
             case 0xB0: //Motor 0Fr,1FL,2BL,3BR, speed 1 byte
-
+                Esc::set((ESC_PIN_t) in[1], in[2]);
                 break;
-            case 0xD0: //Debug variables
-
-                GPS::sendGPS(std::string(temp));
-                break;
-            case 0xD1: //Debug thingy
-
+            case 0xD0: //Debug functions
+                switch(in[1]){
+                    case 0x0:   //GPS message send
+                        GPS::sendGPS(std::string(temp));
+                        break;
+                    case 0x1:   //MPU gyro offsets
+#if GYRO_CALIBRATION
+                        MPU::debuggy((int8_t*) in+2);
+#endif
+                        break;
+                    case 0x2:   //turn off all motors
+                        Esc::setAll(allOff);
+                        break;
+                    case 0x3:   //turn on all motors
+                        Esc::setAll(allOn);
+                        break;
+                    case 0x4:
+                        printf("%f\n", *((float*) (in + 2)) );
+                        Control::updatePID(in[2], (float*) (in+3));
+                        break;
+                }
                 break;
             case 0xF1: //TCP Pong
                 receive = 1;
